@@ -2,3 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+.theme-default {
+  --letter-correct-100: 34 197 94;
+  --letter-correct-200: 22 163 74;
+  --letter-correct-300: 21 128 61;
+  --letter-present-100: 234 179 8;
+  --letter-present-200: 202 138 4;
+  --letter-present-300: 161 98 7;
+}
+
+.theme-colorblind {
+  --letter-correct-100: 249 115 22;
+  --letter-correct-200: 234 88 12;
+  --letter-correct-300: 194 65 12;
+  --letter-present-100: 147 197 253;
+  --letter-present-200: 96 165 250;
+  --letter-present-300: 59 130 246;
+}
