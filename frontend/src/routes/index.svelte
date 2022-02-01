@@ -1,29 +1,17 @@
 <script>
-  import GridRow from '$lib/Grid/GridRow.svelte';
-  import GridContainer from '$lib/Grid/GridContainer.svelte';
-  import GridLetter from '$lib/Grid/GridLetter.svelte';
-  import { classifyGuesses } from '$lib/helpers/letter';
-
-  const guesses = classifyGuesses(['weary', 'pilot'], ['01120', '00010']);
-  const guessesAllowed = 6;
-  const letterCount = 5;
+  import Game from "$lib/Game/index.svelte";
 </script>
 
-<main class="theme-default">
-  <GridContainer>
-    {#each guesses as guess}
-      <GridRow>
-        {#each guess as {letter, type}}
-          <GridLetter {type}>{letter}</GridLetter>
-        {/each}
-      </GridRow>
-    {/each}
-    {#each {length: guessesAllowed - guesses.length} as _}
-      <GridRow>
-        {#each {length: letterCount} as _}
-          <GridLetter type='unused'/>
-        {/each}
-      </GridRow>
-    {/each}
-  </GridContainer>
+<main class="theme-default h-screen w-full overflow-x-hidden bg-slate-50 py-2 md:py-4">
+  <h1 class="text-3xl font-bold leading-7 text-gray-900 tracking-wider px-4 pb-1 text-center">
+    Placeholder
+  </h1>
+  <div class="flex flex-col justify-center items-center max-w-screen-sm mx-auto">
+    <div class="flex w-full">
+      <div class="flex flex-1"/>
+      <div class="flex flex-1 flex-col items-center justify-center select-none">
+        <Game/>
+      </div>
+      <div class="flex flex-1"/>
+  </div>
 </main>

@@ -1,3 +1,3 @@
-<div class='flex flex-col'>
+<div class="flex flex-col">
   <slot/>
 </div>
