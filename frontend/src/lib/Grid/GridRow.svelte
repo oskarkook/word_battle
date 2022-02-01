@@ -1,3 +1,3 @@
-<div class="flex grow w-full h-full">
+<div class='flex grow w-full h-full'>
   <slot/>
 </div>
