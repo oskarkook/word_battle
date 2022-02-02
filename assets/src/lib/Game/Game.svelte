@@ -19,7 +19,7 @@
   let active = {row: 0, column: 0};
 
   function handleKeydown(e: KeyboardEvent) {
-    if(e.ctrlKey || e.metaKey) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
     if(active.row >= guessesAllowed) return;
 
     if(e.key === "Backspace") {
