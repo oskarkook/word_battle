@@ -2,6 +2,7 @@
   import Game from "$lib/Game/index.svelte";
   import Keyboard from "$lib/Keyboard/index.svelte";
   import Button from "$lib/Button/index.svelte";
+  import Timer from "$lib/Timer/Timer.svelte";
   import { browser } from "$app/env";
 
   const localStorage = browser ? window.localStorage : {getItem: () => {}, setItem: () => {}};
@@ -26,14 +27,16 @@
         </label>
       </Button>
     </div>
-    <div class="flex flex-col justify-center items-center max-w-screen-sm mx-auto">
       <div class="flex w-full">
-        <div class="flex flex-1"/>
+        <div class="flex flex-1"></div>
         <div class="flex flex-1 flex-col items-center justify-center select-none">
           <Game/>
         </div>
-        <div class="flex flex-1"/>
-    </div>
+        <div class="flex flex-1 text-sm sm:text-2xl">
+          <div class="sm:pl-6 py-2">
+            <Timer endTime="2022-02-02T03:52:16.442555Z"/>
+          </div>
+        </div>
   </div>
   <Keyboard/>
 </main>
