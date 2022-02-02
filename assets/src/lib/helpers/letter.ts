@@ -1,4 +1,4 @@
-import type { LetterType } from "$src/lib/types";
+import type { LetterType } from "$src/types";
 
 export const allowedLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 

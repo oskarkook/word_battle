@@ -1,6 +1,6 @@
 <script lang="ts">
   import { colorClasses } from "$src/lib/helpers/letter";
-  import type { LetterType } from "$src/lib/types";
+  import type { LetterType } from "$src/types";
   let className: string = "";
   export { className as class };
   export let type: LetterType;
