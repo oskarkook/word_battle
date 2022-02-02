@@ -1,7 +1,8 @@
-<script>
+<script lang="ts">
   import Game from "$src/lib/Game/Game.svelte";
   import Keyboard from "$src/lib/Keyboard/Keyboard.svelte";
   import Button from "$src/lib/Button/Button.svelte";
+  import NodeList from "$src/lib/NodeList/NodeList.svelte";
   import Timer from "$src/lib/Timer/Timer.svelte";
 
   let theme = localStorage.getItem("theme") || "theme-default";
@@ -18,8 +19,9 @@
   </h1>
   <div class="flex flex-col justify-center items-center w-100 h-100 max-w-screen-sm mx-auto">
     <div class="m-0.5 sm:m-1">
+      <NodeList/>
       <Button container>
-        <label role="button" class="px-2 py-1">
+        <label class="px-2 py-1">
           <span>Colorblind</span>
           <input on:click={toggleColorblind} checked={theme === "theme-colorblind"} type="checkbox" class="ml-1"/>
         </label>
