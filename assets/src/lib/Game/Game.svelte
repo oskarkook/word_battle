@@ -3,7 +3,7 @@
   import GridContainer from "$src/lib/Grid/GridContainer.svelte";
   import GridLetter from "$src/lib/Grid/GridLetter.svelte";
   import GridRow from "$src/lib/Grid/GridRow.svelte";
-  import { allowedLetters, Classification, prefillGrid } from "$src/lib/helpers/letter";
+  import { allowedLetters, Classification, prefillGrid } from "$src/helpers/letter";
   import { onDestroy } from "svelte";
 
   let alertComponent: Alert;

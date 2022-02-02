@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { LetterType } from "$src/types";
-  import { colorClasses } from "$src/lib/helpers/letter";
+  import { colorClasses } from "$src/helpers/letter";
   export let type: LetterType = undefined;
   export let active: boolean = false;
 </script>
