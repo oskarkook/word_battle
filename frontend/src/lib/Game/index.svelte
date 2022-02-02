@@ -1,9 +1,13 @@
 <script lang="ts">
+  import Alert from "$lib/Alert/index.svelte";
   import GridContainer from "$lib/Grid/GridContainer.svelte";
   import GridLetter from "$lib/Grid/GridLetter.svelte";
   import GridRow from "$lib/Grid/GridRow.svelte";
   import { allowedLetters, Classification, prefillGrid } from "$lib/helpers/letter";
+  import { onDestroy } from "svelte";
 
+  let alertComponent: Alert;
+  let shakeTimer: NodeJS.Timer | undefined;
   const guessesAllowed = 6;
   const letterCount = 5;
 
@@ -14,6 +18,7 @@
 
   function handleKeydown(e: KeyboardEvent) {
     if(e.ctrlKey || e.metaKey) return;
+    if(active.row >= guessesAllowed) return;
 
     if(e.key === "Backspace") {
       if(active.column > 0) active.column -= 1;
@@ -27,8 +32,10 @@
           active.column = 0;
         }
       } else {
-        // TODO: shake
-        // TODO: show alert
+        if(!shakeTimer) {
+          shakeTimer = setTimeout(() => shakeTimer = undefined, 600);
+        }
+        alertComponent.pushAlert("Not enough letters", 1000);
       }
     } else {
       if(active.column >= letterCount) return;
@@ -38,12 +45,16 @@
       active.column += 1;
     }
   }
+
+  onDestroy(() => {
+    if(shakeTimer) clearTimeout(shakeTimer);
+  });
 </script>
 
 <svelte:window on:keydown={handleKeydown}/>
 <GridContainer>
   {#each rows as row, i}
-    <GridRow>
+    <GridRow shake={shakeTimer && i === active.row}>
       {#each row as {letter, type}}
         <GridLetter {type} active={i === active.row && letter !== ""}>
           {letter}
@@ -52,3 +63,5 @@
     </GridRow>
   {/each}
 </GridContainer>
+
+<Alert bind:this={alertComponent}/>
