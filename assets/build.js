@@ -8,7 +8,7 @@ const watch = args.includes('--watch')
 const deploy = args.includes('--deploy')
 
 let opts = {
-  entryPoints: ['app.js'],
+  entryPoints: ['src/app.js'],
   bundle: true,
   target: 'es2017',
   outdir: '../priv/static/assets',
