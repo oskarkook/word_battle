@@ -33,8 +33,8 @@ function measurePing(channel: Channel) {
 }
 
 const { subscribe, update } = writable<LobbyInfo>({
-  nodes: ["🤔"],
-  active_node: "🤔",
+  nodes: [],
+  active_node: "",
   ping: 0,
 });
 

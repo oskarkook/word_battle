@@ -21,7 +21,7 @@
     <div class="m-0.5 sm:m-1">
       <NodeList/>
       <Button container>
-        <label class="px-2 py-1">
+        <label class="px-2 py-1 cursor-pointer">
           <span>Colorblind</span>
           <input on:click={toggleColorblind} checked={theme === "theme-colorblind"} type="checkbox" class="ml-1"/>
         </label>

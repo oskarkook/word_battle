@@ -4,11 +4,10 @@
 </script>
 
 <Button container>
-  <label class="px-2 py-1">
-    <select class="text-center bg-transparent font-bold">
-      {#each $lobby.nodes as node}
-        <option selected={node === $lobby.active_node}>{node}</option>
-      {/each}
-    </select>
-  </label>
+  <select class="px-2 py-1 appearance-none text-center bg-transparent font-bold cursor-pointer">
+    <option value="" disabled selected hidden>🤔</option>
+    {#each $lobby.nodes as node}
+      <option selected={node === $lobby.active_node}>{node}</option>
+    {/each}
+  </select>
 </Button>
