@@ -1,1 +1,1 @@
-export type LetterType = "correct" | "present" | "absent" | "unused";
+export type LetterType = "correct" | "present" | "absent" | undefined;

@@ -24,6 +24,15 @@ module.exports = {
           300: withOpacityValue("--letter-present-300"),
         },
       },
+      keyframes: {
+        pop: {
+          'from': { transform: 'scale(0.8)', opacity: 0 },
+          '60%': { transform: 'scale(1.1)', opacity: 1 },
+        },
+      },
+      animation: {
+        pop: 'pop 100ms',
+      },
     },
   },
   plugins: [],

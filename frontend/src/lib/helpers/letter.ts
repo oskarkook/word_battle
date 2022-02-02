@@ -1,21 +1,23 @@
 import type { LetterType } from "$lib/types";
 
+export const allowedLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
 export const colorClasses: Record<LetterType, string> = {
   correct: "bg-letter-correct-100",
   present: "bg-letter-present-100",
   absent: "bg-slate-500",
-  unused: "",
 };
 
-export function classifyGuesses(guesses: string[], results: string[]) {
+export type Classification = {letter: string, type: LetterType};
+export function classifyGuesses(guesses: string[], results: string[]): Classification[][] {
   return guesses.map((guess, i) => {
     const result = results[i];
-    return classifyGuess(guess, result);
+    return classifyGuess(guess.split(""), result);
   });
 }
 
-export function classifyGuess(guess: string, result: string) {
-  return guess.split("").map((letter, i) => {
+export function classifyGuess(guess: string[], result: string): Classification[] {
+  return guess.map((letter, i) => {
     const descriptor = result[i];
 
     let type: LetterType;
@@ -31,4 +33,17 @@ export function classifyGuess(guess: string, result: string) {
 
     return {letter, type};
   });
+}
+
+export function prefillGrid(guesses: Classification[][], rows: number, columns: number): Classification[][] {
+  if(guesses.length === rows) return guesses;
+  const emptyRows: Classification[][] = [];
+  for(let i = guesses.length; i < rows; i++) {
+    const row: Classification[] = [];
+    for(let j = 0; j < columns; j++) {
+      row.push({letter: "", type: undefined});
+    }
+    emptyRows.push(row);
+  }
+  return guesses.concat(emptyRows);
 }
