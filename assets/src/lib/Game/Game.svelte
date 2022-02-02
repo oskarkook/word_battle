@@ -6,6 +6,7 @@
   import GridRow from "$src/lib/Grid/GridRow.svelte";
   import { allowedLetters, Classification, prefillGrid } from "$src/helpers/letter";
   import { createAlertsStore } from "$src/stores/alerts";
+  import { globalAlerts } from "$src/global";
 
   const alerts = createAlertsStore();
   let shakeTimer: NodeJS.Timer | undefined;
@@ -36,7 +37,7 @@
         if(!shakeTimer) {
           shakeTimer = setTimeout(() => shakeTimer = undefined, 600);
         }
-        alerts.push("Not enough letters", 1000);
+        alerts.push({ message: "Not enough letters", time: 1000 });
       }
     } else {
       if(active.column >= letterCount) return;
@@ -65,4 +66,4 @@
   {/each}
 </GridContainer>
 
-<Alert alerts={alerts}/>
+<Alert alerts={$alerts.concat($globalAlerts)}/>

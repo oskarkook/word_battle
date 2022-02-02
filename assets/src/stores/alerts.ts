@@ -1,29 +1,27 @@
 import { writable } from "svelte/store";
 
-interface Ref {
+export interface Alert {
   message: string;
-  timer: NodeJS.Timeout | undefined;
+  time?: number;
 }
 
 export function createAlertsStore() {
-  const { subscribe, update } = writable<Ref[]>([]);
+  const { subscribe, update } = writable<Alert[]>([]);
 
   return {
     subscribe,
-    push: (message: string, time: number | undefined) => {
-      let timer: NodeJS.Timeout | undefined;
-      const ref: Ref = {message, timer};
-      if(time !== undefined) {
-        ref.timer = setTimeout(() => {
+    push: (alert: Alert) => {
+      if(alert.time !== undefined) {
+        setTimeout(() => {
           update(alerts => {
-            const index = alerts.indexOf(ref);
+            const index = alerts.indexOf(alert);
             if(index === -1) return;
             alerts.splice(index, 1);
             return alerts;
           });
-        }, time);
+        }, alert.time);
       }
-      update(alerts => [ref, ...alerts]);
+      update(alerts => [alert, ...alerts]);
     }
   };
 }
