@@ -27,16 +27,17 @@
         </label>
       </Button>
     </div>
-      <div class="flex w-full">
-        <div class="flex flex-1"></div>
-        <div class="flex flex-1 flex-col items-center justify-center select-none">
-          <Game/>
+    <div class="flex w-full">
+      <div class="flex flex-1"></div>
+      <div class="flex flex-1 flex-col items-center justify-center select-none">
+        <Game/>
+      </div>
+      <div class="flex flex-1 text-sm sm:text-2xl">
+        <div class="sm:pl-6 py-2">
+          <Timer endTime="2022-02-02T03:52:16.442555Z"/>
         </div>
-        <div class="flex flex-1 text-sm sm:text-2xl">
-          <div class="sm:pl-6 py-2">
-            <Timer endTime="2022-02-02T03:52:16.442555Z"/>
-          </div>
-        </div>
+      </div>
+    </div>
+    <Keyboard/>
   </div>
-  <Keyboard/>
 </main>
