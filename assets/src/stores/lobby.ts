@@ -4,7 +4,7 @@ import { globalAlerts } from "$src/global";
 
 export interface LobbyInfo {
   nodes: string[];
-  active_node: string;
+  default_node: string;
   ping: number;
 };
 
@@ -32,23 +32,36 @@ function measurePing(channel: Channel) {
   });
 }
 
+let defaultNode = localStorage.getItem("default_node");
 const { subscribe, update } = writable<LobbyInfo>({
-  nodes: [],
-  active_node: "",
+  nodes: defaultNode ? [defaultNode] : [],
+  default_node: defaultNode || "",
   ping: 0,
 });
 
 export const lobby = {
   subscribe,
   connect: (socket: Socket) => {
-    const channel = socket.channel("player:lobby", {});
-    channel.join()
-      .receive("ok", resp => {
-        update(info => ({...info, ...resp}));
-        measurePing(channel).then(ping => update(state => ({...state, ping})));
-      })
-      .receive("error", resp => {
-        globalAlerts.push({message: "Could not connect to server!", time: 5000});
-      });
+    return new Promise<void>((resolve, reject) => {
+      const channel = socket.channel("player:lobby", {});
+      channel.join()
+        .receive("ok", resp => {
+          if(!defaultNode || !resp.nodes.includes(defaultNode)) {
+            defaultNode = resp.default_node;
+            localStorage.setItem("default_node", defaultNode);
+          }
+          update(info => ({...info, ...resp, default_node: defaultNode}));
+          measurePing(channel).then(ping => update(state => ({...state, ping})));
+          resolve();
+        })
+        .receive("error", resp => {
+          globalAlerts.push({message: "Could not connect to server!", time: 5000});
+          reject();
+        });
+    });
+  },
+  setNode: (node: string) => {
+    localStorage.setItem("default_node", node);
+    update(info => ({...info, default_node: node}));
   }
 };
