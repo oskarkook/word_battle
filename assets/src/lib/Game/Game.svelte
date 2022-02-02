@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Alert from "$src/lib/Alert/index.svelte";
+  import Alert from "$src/lib/Alert/Alert.svelte";
   import GridContainer from "$src/lib/Grid/GridContainer.svelte";
   import GridLetter from "$src/lib/Grid/GridLetter.svelte";
   import GridRow from "$src/lib/Grid/GridRow.svelte";

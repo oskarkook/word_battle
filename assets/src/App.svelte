@@ -1,7 +1,7 @@
 <script>
-  import Game from "$src/lib/Game/index.svelte";
-  import Keyboard from "$src/lib/Keyboard/index.svelte";
-  import Button from "$src/lib/Button/index.svelte";
+  import Game from "$src/lib/Game/Game.svelte";
+  import Keyboard from "$src/lib/Keyboard/Keyboard.svelte";
+  import Button from "$src/lib/Button/Button.svelte";
   import Timer from "$src/lib/Timer/Timer.svelte";
 
   let theme = localStorage.getItem("theme") || "theme-default";
