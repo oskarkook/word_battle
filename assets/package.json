@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "@types/phoenix": "^1.5.4",
     "esbuild": "^0.14.17",
     "esbuild-svelte": "^0.6.2",
     "svelte-preprocess": "^4.10.2",
