@@ -1,12 +1,13 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import Alert from "$src/lib/Alert/Alert.svelte";
   import GridContainer from "$src/lib/Grid/GridContainer.svelte";
   import GridLetter from "$src/lib/Grid/GridLetter.svelte";
   import GridRow from "$src/lib/Grid/GridRow.svelte";
   import { allowedLetters, Classification, prefillGrid } from "$src/helpers/letter";
-  import { onDestroy } from "svelte";
+  import { createAlertsStore } from "$src/stores/alerts";
 
-  let alertComponent: Alert;
+  const alerts = createAlertsStore();
   let shakeTimer: NodeJS.Timer | undefined;
   const guessesAllowed = 6;
   const letterCount = 5;
@@ -35,7 +36,7 @@
         if(!shakeTimer) {
           shakeTimer = setTimeout(() => shakeTimer = undefined, 600);
         }
-        alertComponent.pushAlert("Not enough letters", 1000);
+        alerts.push("Not enough letters", 1000);
       }
     } else {
       if(active.column >= letterCount) return;
@@ -64,4 +65,4 @@
   {/each}
 </GridContainer>
 
-<Alert bind:this={alertComponent}/>
+<Alert alerts={alerts}/>
