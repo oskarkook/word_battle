@@ -6,8 +6,9 @@
   export let type: LetterType;
   export let value: string;
 
-  function handleClick() {
+  function handleClick(e) {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: value }))
+    e.target.blur(); // required to remove focus so enter key won't interact with it
   }
 </script>
 
