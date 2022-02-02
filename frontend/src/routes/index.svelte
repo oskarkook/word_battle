@@ -1,5 +1,6 @@
 <script>
   import Game from "$lib/Game/index.svelte";
+  import Keyboard from "$lib/Keyboard/index.svelte";
 </script>
 
 <main class="theme-default h-screen w-full overflow-x-hidden bg-slate-50 py-2 md:py-4">
@@ -14,4 +15,5 @@
       </div>
       <div class="flex flex-1"/>
   </div>
+  <Keyboard/>
 </main>
