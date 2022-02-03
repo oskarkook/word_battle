@@ -3,8 +3,8 @@ defmodule WordBattleWeb.PlayerChannel do
 
   @impl true
   def join("player:lobby", _payload, socket) do
-    nodes = ["EU", "US", "AU"]
-    {:ok, %{nodes: nodes, default_node: "EU"}, socket}
+    nodes = [node() | Node.list()]
+    {:ok, %{nodes: nodes, default_node: node()}, socket}
   end
 
   @impl true
