@@ -8,14 +8,12 @@ defmodule WordBattle.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Start the Telemetry supervisor
+      {Cluster.Supervisor,
+       [Application.get_env(:libcluster, :topologies), [name: WordBattle.ClusterSupervisor]]},
+      {WordBattle.GameList, name: WordBattle.GameList},
       WordBattleWeb.Telemetry,
-      # Start the PubSub system
       {Phoenix.PubSub, name: WordBattle.PubSub},
-      # Start the Endpoint (http/https)
       WordBattleWeb.Endpoint
-      # Start a worker by calling: WordBattle.Worker.start_link(arg)
-      # {WordBattle.Worker, arg}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
