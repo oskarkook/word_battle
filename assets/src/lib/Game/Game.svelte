@@ -7,11 +7,13 @@
   import { allowedLetters, Classification, prefillGrid } from "$src/helpers/letter";
   import { createAlertsStore } from "$src/stores/alerts";
   import { globalAlerts } from "$src/global";
+  import { lobby } from "$src/stores/lobby";
 
   const alerts = createAlertsStore();
   let shakeTimer: NodeJS.Timer | undefined;
   const guessesAllowed = 6;
   const letterCount = 5;
+  let loading = false;
 
   // We are storing the whole grid in one data structure so they can be all rendered as one bunch.
   // This ensures that animations and transitions work as expected when rows change.
@@ -28,6 +30,10 @@
     } else if(e.key === "Enter") {
       if(active.column >= letterCount) {
         // TODO: send guess to server
+        if($lobby.ping >= 500) {
+          // below 500ms the loader just makes the app feel unresponsive unnecessarily
+          loading = true;
+        }
         rows[active.row] = rows[active.row].map(cls => ({letter: cls.letter, type: "absent"}));
         if(active.row < rows.length) {
           active.row += 1;
@@ -65,5 +71,10 @@
     </GridRow>
   {/each}
 </GridContainer>
+<div
+  style="border-top-color:transparent"
+  class:hidden={!loading}
+  class="absolute flex z-10 w-8 h-8 border-4 border-cyan-500 border-solid rounded-full animate-spin"
+/>
 
 <Alert alerts={$alerts.concat($globalAlerts)}/>
