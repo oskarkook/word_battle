@@ -7,6 +7,11 @@ import Config
 # any compile-time configuration in here, as it won't be applied.
 # The block below contains prod specific runtime configuration.
 
+config :word_battle, WordBattle.Words,
+  solutions_path: System.fetch_env!("SOLUTIONS"),
+  valid_guesses_path: System.fetch_env!("VALID_GUESSES"),
+  word_length: System.get_env("WORD_LENGTH", "5") |> String.to_integer()
+
 # Start the phoenix server if environment is set and running in a release
 if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
   config :word_battle, WordBattleWeb.Endpoint, server: true

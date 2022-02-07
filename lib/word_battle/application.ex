@@ -7,6 +7,8 @@ defmodule WordBattle.Application do
 
   @impl true
   def start(_type, _args) do
+    WordBattle.Words.load_words!()
+
     children = [
       {Cluster.Supervisor,
        [Application.get_env(:libcluster, :topologies), [name: WordBattle.ClusterSupervisor]]},
