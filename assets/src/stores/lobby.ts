@@ -6,6 +6,7 @@ export interface LobbyInfo {
   nodes: string[];
   default_node: string;
   ping: number;
+  queuedForNode: string | undefined;
 };
 
 function measurePing(channel: Channel) {
@@ -33,17 +34,32 @@ function measurePing(channel: Channel) {
 }
 
 let defaultNode = localStorage.getItem("default_node");
+let channel: Channel | undefined;
 const { subscribe, update } = writable<LobbyInfo>({
   nodes: defaultNode ? [defaultNode] : [],
   default_node: defaultNode || "",
   ping: 0,
+  queuedForNode: undefined,
 });
 
 export const lobby = {
   subscribe,
   connect: (socket: Socket) => {
+    if(channel !== undefined) {
+      channel.leave();
+    }
+    channel = socket.channel("player:lobby", {});
     return new Promise<void>((resolve, reject) => {
-      const channel = socket.channel("player:lobby", {});
+      channel.onClose(() => {
+        update(state => ({...state, queuedForNode: undefined}));
+      });
+
+      channel.onError((reason) => {
+        update(state => ({...state, queuedForNode: undefined}));
+        if(reason !== undefined) {
+          globalAlerts.push({message: "Connection error!", time: 5000});
+        }
+      });
       channel.join()
         .receive("ok", resp => {
           if(!defaultNode || !resp.nodes.includes(defaultNode)) {
@@ -63,5 +79,23 @@ export const lobby = {
   setNode: (node: string) => {
     localStorage.setItem("default_node", node);
     update(info => ({...info, default_node: node}));
+  },
+  joinQueue: (node: string) => {
+    channel.push("join_queue", { node })
+      .receive("ok", resp => {
+        update(state => ({...state, queuedForNode: node}));
+      })
+      .receive("error", resp => {
+        globalAlerts.push({ message: resp, time: 1500 });
+      });
+  },
+  leaveQueue: () => {
+    channel.push("leave_queue", {})
+      .receive("ok", resp => {
+        update(state => ({...state, queuedForNode: undefined}));
+      })
+      .receive("error", resp => {
+        globalAlerts.push({ message: resp, time: 1500 });
+      });
   }
 };

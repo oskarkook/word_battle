@@ -12,7 +12,8 @@ defmodule WordBattle.Application do
     children = [
       {Cluster.Supervisor,
        [Application.get_env(:libcluster, :topologies), [name: WordBattle.ClusterSupervisor]]},
-      {WordBattle.GameList, name: WordBattle.GameList},
+      {Registry, keys: :unique, name: WordBattle.GameRegistry},
+      {WordBattle.PlayerQueue, name: WordBattle.PlayerQueue},
       WordBattleWeb.Telemetry,
       {Phoenix.PubSub, name: WordBattle.PubSub},
       WordBattleWeb.Endpoint
