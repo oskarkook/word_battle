@@ -65,7 +65,7 @@ defmodule WordBattle.GameState do
   # === Server ===
   @impl GenServer
   def init({game_id, player_pids}) do
-    players_state =
+    player_guesses =
       for n <- 0..(length(player_pids) - 1), into: %{} do
         {n, []}
       end
@@ -83,7 +83,7 @@ defmodule WordBattle.GameState do
         begin_at: DateTime.add(now, 10, :second),
         finish_at: DateTime.add(now, 210, :second)
       },
-      players_state: players_state
+      player_guesses: player_guesses
     }
 
     {:ok, state, {:continue, player_pids}}
@@ -109,7 +109,7 @@ defmodule WordBattle.GameState do
 
   @impl GenServer
   def handle_call({:add_player_guess, player_id, guess}, _, state) do
-    state = update_in(state, [:players_state, player_id], fn guesses -> guesses ++ [guess] end)
+    state = update_in(state, [:player_guesses, player_id], fn guesses -> guesses ++ [guess] end)
     {:reply, :ok, state}
   end
 

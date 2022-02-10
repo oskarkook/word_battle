@@ -1,6 +1,8 @@
 import { Channel, Socket } from "phoenix";
 import { writable } from "svelte/store";
 import { globalAlerts } from "$src/global";
+import { GameInfo, setLocalGameInfo } from "$src/helpers/gameInfo";
+import { game } from "$src/stores/game";
 
 export interface LobbyInfo {
   nodes: string[];
@@ -60,6 +62,14 @@ export const lobby = {
           globalAlerts.push({message: "Connection error!", time: 5000});
         }
       });
+
+      channel.on("game_join", (gameInfo: GameInfo) => {
+        setLocalGameInfo(gameInfo);
+        update(state => ({...state, queuedForNode: undefined}));
+        globalAlerts.push({ message: "Game found! Get ready!", time: 1500 });
+        game.connect(socket, gameInfo);
+      });
+
       channel.join()
         .receive("ok", resp => {
           if(!defaultNode || !resp.nodes.includes(defaultNode)) {

@@ -2,6 +2,7 @@ defmodule WordBattleWeb.GameSocket do
   use Phoenix.Socket
 
   channel "player:lobby", WordBattleWeb.PlayerChannel
+  channel "game:*", WordBattleWeb.GameChannel
 
   @impl true
   def connect(_params, socket, _connect_info) do

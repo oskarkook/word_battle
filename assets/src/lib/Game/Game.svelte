@@ -4,21 +4,26 @@
   import GridContainer from "$src/lib/Grid/GridContainer.svelte";
   import GridLetter from "$src/lib/Grid/GridLetter.svelte";
   import GridRow from "$src/lib/Grid/GridRow.svelte";
-  import { allowedLetters, Classification, prefillGrid } from "$src/helpers/letter";
+  import { allowedLetters, buildGrid } from "$src/helpers/letter";
   import { createAlertsStore } from "$src/stores/alerts";
   import { globalAlerts } from "$src/global";
   import { lobby } from "$src/stores/lobby";
+  import { game } from "$src/stores/game";
 
   const alerts = createAlertsStore();
   let shakeTimer: NodeJS.Timer | undefined;
-  const guessesAllowed = 6;
-  const letterCount = 5;
   let loading = false;
 
-  // We are storing the whole grid in one data structure so they can be all rendered as one bunch.
-  // This ensures that animations and transitions work as expected when rows change.
-  let rows: Classification[][] = prefillGrid([], guessesAllowed, letterCount);
-  let active = {row: 0, column: 0};
+  $: guessesAllowed = $game.game_definition.guesses_allowed;
+  $: wordLength = $game.game_definition.word_length;
+  $: rows = buildGrid($game.my_guessed_words, guessesAllowed, wordLength);
+  $: active = {row: $game.my_guessed_words.length, column: 0};
+
+  function shake() {
+    if(!shakeTimer) {
+      shakeTimer = setTimeout(() => shakeTimer = undefined, 600);
+    }
+  }
 
   function handleKeydown(e: KeyboardEvent) {
     if(e.ctrlKey || e.metaKey || e.altKey) return;
@@ -28,25 +33,24 @@
       if(active.column > 0) active.column -= 1;
       rows[active.row][active.column].letter = "";
     } else if(e.key === "Enter") {
-      if(active.column >= letterCount) {
-        // TODO: send guess to server
+      if(active.column >= wordLength) {
         if($lobby.ping >= 500) {
           // below 500ms the loader just makes the app feel unresponsive unnecessarily
           loading = true;
         }
-        rows[active.row] = rows[active.row].map(cls => ({letter: cls.letter, type: "absent"}));
-        if(active.row < rows.length) {
-          active.row += 1;
-          active.column = 0;
-        }
+        game.guess(rows[active.row].map(({ letter }) => letter))
+          .catch(resp => {
+            if(resp.r === "w") {
+              shake();
+            }
+            alerts.push({ message: resp.m, time: 1500 });
+          });
       } else {
-        if(!shakeTimer) {
-          shakeTimer = setTimeout(() => shakeTimer = undefined, 600);
-        }
+        shake();
         alerts.push({ message: "Not enough letters", time: 1000 });
       }
     } else {
-      if(active.column >= letterCount) return;
+      if(active.column >= wordLength) return;
       const letter = e.key.toUpperCase();
       if(!allowedLetters.includes(letter)) return;
       rows[active.row][active.column].letter = letter;
