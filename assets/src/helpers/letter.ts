@@ -1,4 +1,4 @@
-import type { LetterType } from "$src/types";
+export type LetterType = "correct" | "present" | "absent" | undefined;
 
 export const allowedLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
