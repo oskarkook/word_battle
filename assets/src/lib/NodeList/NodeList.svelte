@@ -7,7 +7,7 @@
   }
 </script>
 
-<Button container class="w-10">
+<Button container class="w-10 overflow-x-hidden">
   <select class="px-2 py-1 appearance-none text-center bg-transparent font-bold cursor-pointer" value={$lobby.default_node} on:change={handleChange}>
     {#if !$lobby.nodes.includes($lobby.default_node)}
       <option>{$lobby.default_node}</option>
