@@ -69,6 +69,12 @@ export const game = {
     }
     channel = socket.channel(`game:${node}:${game_id}`, {token});
     return new Promise<void>((resolve, reject) => {
+      channel.onError((reason) => {
+        if(reason !== undefined) {
+          globalAlerts.push({message: "Connection error!", time: 5000});
+        }
+      });
+
       channel.join()
         .receive("ok", resp => {
           const player_guesses = classifyPlayerGuesses(resp.player_guesses);
