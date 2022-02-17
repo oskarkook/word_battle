@@ -2,7 +2,7 @@ import App from "./App.svelte";
 import { Socket } from "phoenix";
 import { lobby } from "$src/stores/lobby";
 import { globalAlerts } from "$src/global";
-import { getLocalGameInfo } from "$src/helpers/gameInfo";
+import { getLocalGameInfo, clearLocalGameInfo } from "$src/helpers/gameInfo";
 import { game } from "$src/stores/game";
 
 function startSocket() {
@@ -21,7 +21,13 @@ function joinLobby(socket) {
 function restoreGame(socket) {
 	const gameInfo = getLocalGameInfo();
 	if(gameInfo !== undefined) {
-		game.connect(socket, gameInfo);
+		const deadAt = new Date(gameInfo.dead_at);
+		const now = new Date();
+		if(now < deadAt) {
+			game.connect(socket, gameInfo);
+		} else {
+			clearLocalGameInfo();
+		}
 	}
 }
 

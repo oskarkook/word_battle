@@ -2,6 +2,7 @@ export interface GameInfo {
   node: string;
   game_id: string;
   token: string;
+  dead_at: string;
 }
 
 const identifier = "game_info";

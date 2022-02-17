@@ -109,9 +109,8 @@ defmodule WordBattle.GameState do
     player_pids
     |> Enum.with_index()
     |> Enum.each(fn {pid, i} ->
-      %GameDefinition{node: node, id: game_id} = state.game_definition
-      token = sign_token(node, game_id, i)
-      send(pid, {:game_join, node, game_id, token})
+      %GameDefinition{node: node, id: game_id, dead_at: dead_at} = state.game_definition
+      send(pid, {:game_join, node, game_id, token, dead_at})
     end)
 
     Logger.info(

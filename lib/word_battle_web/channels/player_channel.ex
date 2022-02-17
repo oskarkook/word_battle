@@ -32,8 +32,8 @@ defmodule WordBattleWeb.PlayerChannel do
   end
 
   @impl true
-  def handle_info({:game_join, node, game_id, token}, socket) do
-    push(socket, "game_join", %{node: node, game_id: game_id, token: token})
+  def handle_info({:game_join, node, game_id, token, dead_at}, socket) do
+    push(socket, "game_join", %{node: node, game_id: game_id, token: token, dead_at: dead_at})
     {:noreply, assign(socket, queued_on: nil)}
   end
 end
