@@ -65,6 +65,8 @@ defmodule WordBattle.GameState do
   # === Server ===
   @impl GenServer
   def init({game_id, player_pids}) do
+    config = Application.fetch_env!(:word_battle, :game)
+
     player_guesses =
       for n <- 0..(length(player_pids) - 1), into: %{} do
         {n, []}
@@ -73,6 +75,10 @@ defmodule WordBattle.GameState do
     solution = WordBattle.Words.random_solution()
     now = DateTime.utc_now()
 
+    begin_at = DateTime.add(now, config[:start_delay], :millisecond)
+    finish_at = DateTime.add(begin_at, config[:game_length], :millisecond)
+    dead_at = DateTime.add(finish_at, config[:finish_delay], :millisecond)
+
     state = %{
       game_definition: %GameDefinition{
         node: node(),
@@ -80,8 +86,9 @@ defmodule WordBattle.GameState do
         solution: solution,
         word_length: String.length(solution),
         guesses_allowed: 6,
-        begin_at: DateTime.add(now, 10, :second),
-        finish_at: DateTime.add(now, 210, :second)
+        begin_at: begin_at,
+        finish_at: finish_at,
+        dead_at: dead_at
       },
       player_guesses: player_guesses
     }

@@ -6,5 +6,6 @@ defmodule WordBattle.GameDefinition do
             word_length: nil,
             guesses_allowed: 6,
             begin_at: nil,
-            finish_at: nil
+            finish_at: nil,
+            dead_at: nil
 end

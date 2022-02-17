@@ -3,8 +3,6 @@ defmodule WordBattle.PlayerQueue do
   require Logger
   alias WordBattle.GameState
 
-  @players_for_game 1
-
   # === Client ===
 
   def start_link(opts) when is_list(opts) do
@@ -28,11 +26,13 @@ defmodule WordBattle.PlayerQueue do
 
   @impl GenServer
   def handle_call(:join, {pid, _tag}, map) do
+    max_players = Application.fetch_env!(:word_battle, :game)[:max_players]
+
     cond do
       Map.has_key?(map, pid) ->
         {:reply, :exists, map}
 
-      map_size(map) >= @players_for_game - 1 ->
+      map_size(map) >= max_players - 1 ->
         {:ok, _pid} =
           [pid | Map.keys(map)]
           |> GameState.start()
@@ -40,7 +40,6 @@ defmodule WordBattle.PlayerQueue do
         Map.values(map)
         |> Enum.each(&Process.demonitor/1)
 
-        Logger.debug("New game started!")
         {:reply, :ok, Map.new()}
 
       true ->
