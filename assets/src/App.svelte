@@ -5,6 +5,7 @@
   import NodeList from "$src/lib/NodeList/NodeList.svelte";
   import Timer from "$src/lib/Timer/Timer.svelte";
   import { lobby } from "$src/stores/lobby";
+  import { game } from "$src/stores/game";
 
   let theme = localStorage.getItem("theme") || "theme-default";
   function toggleColorblind() {
@@ -20,6 +21,10 @@
   function leaveQueue() {
     lobby.leaveQueue();
   }
+
+  function leaveGame() {
+    game.leave();
+  }
 </script>
 
 <main class={`${theme} h-screen w-full overflow-x-hidden bg-slate-50 py-2 md:py-4`}>
@@ -28,7 +33,9 @@
   </h1>
   <div class="flex flex-col justify-center items-center w-100 h-100 max-w-screen-sm mx-auto">
     <div class="m-0.5 sm:m-1">
-      {#if $lobby.queuedForNode === undefined}
+      {#if $game.connected}
+        <Button on:click={leaveGame}>Leave game</Button>
+      {:else if $lobby.queuedForNode === undefined}
         <Button on:click={joinQueue}>Find game</Button>
       {:else}
         <Button class="animate-pulse" on:click={leaveQueue}>Searching...</Button>

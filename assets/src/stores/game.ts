@@ -6,6 +6,7 @@ import { writable } from "svelte/store";
 
 type PlayerId = string | number;
 interface GameState {
+  connected: boolean;
   game_definition: {
     begin_at: string | undefined;
     finish_at: string | undefined;
@@ -21,6 +22,7 @@ interface GameState {
 
 let channel: Channel | undefined;
 const { subscribe, update, set } = writable<GameState>({
+  connected: false,
   game_definition: {
     begin_at: undefined,
     finish_at: undefined,
@@ -68,11 +70,15 @@ export const game = {
       channel.leave();
     }
     channel = socket.channel(`game:${node}:${game_id}`, {token});
+    update(state => ({...state, connected: true}));
     return new Promise<void>((resolve, reject) => {
       channel.onClose((reason) => {
-        if(reason === "leave") return; // local leave
-        globalAlerts.push({message: "Disconnected from game", time: 1500});
-        clearLocalGameInfo();
+        update(state => ({...state, connected: false}));
+        if(reason !== "leave") {
+          // "leave" is the reason when we purposefully disconnect
+          globalAlerts.push({message: "Disconnected from game", time: 1500});
+          clearLocalGameInfo();
+        }
       });
 
       channel.onError((reason) => {
@@ -86,6 +92,7 @@ export const game = {
           const player_guesses = classifyPlayerGuesses(resp.player_guesses);
 
           set({
+            connected: true,
             game_definition: resp.game_definition,
             player_id: resp.player_id,
             player_guesses,
@@ -121,5 +128,10 @@ export const game = {
           reject(resp);
         });
     });
+  },
+  leave: () => {
+    clearLocalGameInfo();
+    globalAlerts.push({message: "Left game", time: 1500});
+    channel.leave();
   }
 };
