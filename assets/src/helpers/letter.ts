@@ -33,3 +33,17 @@ export function buildGrid(guesses: Classification[][], rows: number, columns: nu
   }
   return guesses.concat(emptyRows);
 }
+
+const ranking: LetterType[] = ["absent", "present", "correct"];
+export function letterTypes(guesses: Classification[][]): Map<string, LetterType> {
+  const map = new Map<string, LetterType>();
+  guesses.forEach(guess => {
+    guess.forEach(({ letter, type }) => {
+      const prev = map.get(letter);
+      if(ranking.indexOf(type) > ranking.indexOf(prev)) {
+        map.set(letter, type);
+      }
+    });
+  });
+  return map;
+}
