@@ -33,6 +33,7 @@ defmodule WordBattleWeb.GameChannel do
           solution_map: solution_map
         )
 
+      disconnect_at(game_definition.dead_at)
       {:ok, reply, socket}
     else
       {:error, :not_found} ->
@@ -82,6 +83,11 @@ defmodule WordBattleWeb.GameChannel do
     {:reply, reply, socket}
   end
 
+  @impl true
+  def handle_info(:disconnect, socket) do
+    {:stop, :normal, socket}
+  end
+
   defp obfuscate_guess(guess, solution_map) do
     for {letter, position} <- String.graphemes(guess) |> Enum.with_index(), into: <<>> do
       letter_positions = Map.get(solution_map, letter)
@@ -103,5 +109,10 @@ defmodule WordBattleWeb.GameChannel do
   defp parse_node_and_id(string) when is_binary(string) do
     [node, id] = String.split(string, ":", parts: 2)
     {String.to_existing_atom(node), id}
+  end
+
+  defp disconnect_at(dead_at) do
+    now = DateTime.utc_now()
+    Process.send_after(self(), :disconnect, DateTime.diff(dead_at, now, :millisecond))
   end
 end

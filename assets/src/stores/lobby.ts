@@ -66,7 +66,7 @@ export const lobby = {
       channel.on("game_join", (gameInfo: GameInfo) => {
         setLocalGameInfo(gameInfo);
         update(state => ({...state, queuedForNode: undefined}));
-        globalAlerts.push({ message: "Game found! Get ready!", time: 1500 });
+        globalAlerts.push({ message: "Game found! Get ready!", time: 2500 });
         game.connect(socket, gameInfo);
       });
 

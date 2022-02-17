@@ -134,7 +134,7 @@ defmodule WordBattle.GameState do
 
   @impl GenServer
   def handle_info(:kill, state) do
-    {:stop, :scheduled, state}
+    {:stop, :normal, state}
   end
 
   @impl GenServer

@@ -1,5 +1,5 @@
 import { globalAlerts } from "$src/global";
-import { GameInfo } from "$src/helpers/gameInfo";
+import { clearLocalGameInfo, GameInfo } from "$src/helpers/gameInfo";
 import { Classification, classifyLetter, LetterType } from "$src/helpers/letter";
 import { Channel, Socket } from "phoenix";
 import { writable } from "svelte/store";
@@ -69,6 +69,12 @@ export const game = {
     }
     channel = socket.channel(`game:${node}:${game_id}`, {token});
     return new Promise<void>((resolve, reject) => {
+      channel.onClose((reason) => {
+        if(reason === "leave") return; // local leave
+        globalAlerts.push({message: "Disconnected from game", time: 1500});
+        clearLocalGameInfo();
+      });
+
       channel.onError((reason) => {
         if(reason !== undefined) {
           globalAlerts.push({message: "Connection error!", time: 5000});
@@ -88,7 +94,9 @@ export const game = {
           resolve();
         })
         .receive("error", resp => {
-          globalAlerts.push({message: resp.reason, time: 5000});
+          globalAlerts.push({message: resp.reason, time: 1500});
+          clearLocalGameInfo();
+          channel.leave();
           reject();
         });
     });
