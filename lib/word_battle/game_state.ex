@@ -110,6 +110,8 @@ defmodule WordBattle.GameState do
     |> Enum.with_index()
     |> Enum.each(fn {pid, i} ->
       %GameDefinition{node: node, id: game_id, dead_at: dead_at} = state.game_definition
+      max_token_age = DateTime.diff(dead_at, DateTime.utc_now(), :second)
+      token = sign_token(node, game_id, i, max_token_age)
       send(pid, {:game_join, node, game_id, token, dead_at})
     end)
 
@@ -144,8 +146,13 @@ defmodule WordBattle.GameState do
   end
 
   # === Private ===
-  defp sign_token(node, game_id, player_id) do
-    Phoenix.Token.sign(WordBattleWeb.Endpoint, "game_state", {node, game_id, player_id})
+  defp sign_token(node, game_id, player_id, max_age) do
+    Phoenix.Token.sign(
+      WordBattleWeb.Endpoint,
+      "game_state",
+      {node, game_id, player_id},
+      max_age: max_age
+    )
   end
 
   defp verify_token(token) do
