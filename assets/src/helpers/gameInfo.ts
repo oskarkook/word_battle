@@ -5,7 +5,7 @@ export interface GameInfo {
 }
 
 export function getLocalGameInfo(): GameInfo | undefined {
-  const gameInfo = localStorage.getItem("game_info");
+  const gameInfo = sessionStorage.getItem("game_info");
   if(gameInfo) {
     return JSON.parse(gameInfo) as GameInfo;
   }
@@ -14,5 +14,5 @@ export function getLocalGameInfo(): GameInfo | undefined {
 }
 
 export function setLocalGameInfo(gameInfo: GameInfo) {
-  localStorage.setItem("game_info", JSON.stringify(gameInfo));
+  sessionStorage.setItem("game_info", JSON.stringify(gameInfo));
 }
