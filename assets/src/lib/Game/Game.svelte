@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
   import Alert from "$src/lib/Alert/Alert.svelte";
   import GridContainer from "$src/lib/Grid/GridContainer.svelte";
   import GridLetter from "$src/lib/Grid/GridLetter.svelte";
@@ -11,19 +10,13 @@
   import { game } from "$src/stores/game";
 
   const alerts = createAlertsStore();
-  let shakeTimer: NodeJS.Timer | undefined;
   let loading = false;
 
   $: guessesAllowed = $game.game_definition.guesses_allowed;
   $: wordLength = $game.game_definition.word_length;
   $: rows = buildGrid($game.my_guessed_words, guessesAllowed, wordLength);
   $: active = {row: $game.my_guessed_words.length, column: 0};
-
-  function shake() {
-    if(!shakeTimer) {
-      shakeTimer = setTimeout(() => shakeTimer = undefined, 600);
-    }
-  }
+  let rowComponents: GridRow[] = [];
 
   function handleKeydown(e: KeyboardEvent) {
     if(e.ctrlKey || e.metaKey || e.altKey) return;
@@ -41,12 +34,12 @@
         game.guess(rows[active.row].map(({ letter }) => letter))
           .catch(resp => {
             if(resp.r === "w") {
-              shake();
+              rowComponents[active.row].shake();
             }
             alerts.push({ message: resp.m, time: 1500 });
           });
       } else {
-        shake();
+        rowComponents[active.row].shake();
         alerts.push({ message: "Not enough letters", time: 1000 });
       }
     } else {
@@ -57,16 +50,12 @@
       active.column += 1;
     }
   }
-
-  onDestroy(() => {
-    if(shakeTimer) clearTimeout(shakeTimer);
-  });
 </script>
 
 <svelte:window on:keydown={handleKeydown}/>
 <GridContainer>
   {#each rows as row, i}
-    <GridRow shake={shakeTimer && i === active.row}>
+    <GridRow bind:this={rowComponents[i]}>
       {#each row as {letter, type}}
         <GridLetter {type} active={i === active.row && letter !== ""}>
           {letter}
