@@ -6,41 +6,40 @@ defmodule WordBattleWeb.GameChannel do
   def join("game:" <> node_and_id, %{"token" => token}, socket) do
     {node, game_id} = parse_node_and_id(node_and_id)
 
-    case GameState.verify(node, game_id, token) do
-      {:ok, {node, game_id, player_id}} ->
-        %{
+    with {:ok, {node, game_id, player_id}} <- GameState.verify(node, game_id, token),
+         {:ok, game_info} <- GameState.get_info(node, game_id) do
+      %{game_definition: game_definition, player_guesses: player_guesses} = game_info
+      solution_map = new_letter_map(game_definition.solution)
+
+      reply = %{
+        player_id: player_id,
+        game_definition:
+          game_definition
+          |> Map.take([:begin_at, :finish_at, :word_length, :guesses_allowed]),
+        player_guesses:
+          player_guesses
+          |> Enum.map(fn {player_id, guesses} ->
+            guesses = Enum.map(guesses, &obfuscate_guess(&1, solution_map))
+            {player_id, guesses}
+          end)
+          |> Enum.into(%{}),
+        my_guessed_words: Map.get(player_guesses, player_id, [])
+      }
+
+      socket =
+        assign(socket,
           game_definition: game_definition,
-          player_guesses: player_guesses
-        } = GameState.get_info(node, game_id)
-
-        solution_map = new_letter_map(game_definition.solution)
-
-        reply = %{
           player_id: player_id,
-          game_definition:
-            game_definition
-            |> Map.take([:begin_at, :finish_at, :word_length, :guesses_allowed]),
-          player_guesses:
-            player_guesses
-            |> Enum.map(fn {player_id, guesses} ->
-              guesses = Enum.map(guesses, &obfuscate_guess(&1, solution_map))
-              {player_id, guesses}
-            end)
-            |> Enum.into(%{}),
-          my_guessed_words: Map.get(player_guesses, player_id, [])
-        }
+          solution_map: solution_map
+        )
 
-        socket =
-          assign(socket,
-            game_definition: game_definition,
-            player_id: player_id,
-            solution_map: solution_map
-          )
-
-        {:ok, reply, socket}
+      {:ok, reply, socket}
+    else
+      {:error, :not_found} ->
+        {:error, %{reason: "Game not found"}}
 
       _other ->
-        {:error, %{reason: "unauthorized"}}
+        {:error, %{reason: "Unauthorized"}}
     end
   end
 

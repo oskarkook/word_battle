@@ -88,7 +88,7 @@ export const game = {
           resolve();
         })
         .receive("error", resp => {
-          globalAlerts.push({message: resp, time: 5000});
+          globalAlerts.push({message: resp.reason, time: 5000});
           reject();
         });
     });

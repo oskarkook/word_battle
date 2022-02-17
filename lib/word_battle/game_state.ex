@@ -1,5 +1,6 @@
 defmodule WordBattle.GameState do
   use GenServer
+  require Logger
   alias WordBattle.GameDefinition
 
   # === Client ===
@@ -30,8 +31,14 @@ defmodule WordBattle.GameState do
 
   def get_info(node, game_id) when is_atom(node) and is_binary(game_id) do
     if node == node() do
-      [{pid, nil}] = Registry.lookup(WordBattle.GameRegistry, game_id)
-      GenServer.call(pid, :get_info)
+      case Registry.lookup(WordBattle.GameRegistry, game_id) do
+        [{pid, nil}] ->
+          result = GenServer.call(pid, :get_info)
+          {:ok, result}
+
+        _other ->
+          {:error, :not_found}
+      end
     else
       :rpc.call(node, __MODULE__, :get_info, [node, game_id])
     end
@@ -93,6 +100,7 @@ defmodule WordBattle.GameState do
       player_guesses: player_guesses
     }
 
+    Process.send_after(self(), :kill, DateTime.diff(dead_at, now, :millisecond))
     {:ok, state, {:continue, player_pids}}
   end
 
@@ -106,6 +114,10 @@ defmodule WordBattle.GameState do
       send(pid, {:game_join, node, game_id, token})
     end)
 
+    Logger.info(
+      "Started game #{state.game_definition.id} with #{map_size(state.player_guesses)} players"
+    )
+
     {:noreply, state}
   end
 
@@ -118,6 +130,18 @@ defmodule WordBattle.GameState do
   def handle_call({:add_player_guess, player_id, guess}, _, state) do
     state = update_in(state, [:player_guesses, player_id], fn guesses -> guesses ++ [guess] end)
     {:reply, :ok, state}
+  end
+
+  @impl GenServer
+  def handle_info(:kill, state) do
+    {:stop, :scheduled, state}
+  end
+
+  @impl GenServer
+  def terminate(reason, state) do
+    Logger.info(
+      "Game #{state.game_definition.id} has been terminated with #{map_size(state.player_guesses)} players, reason: #{inspect(reason)}"
+    )
   end
 
   # === Private ===
