@@ -18,6 +18,7 @@
   $: active = {row: $game.my_guessed_words.length, column: 0};
   let rowComponents: GridRow[] = [];
 
+  let enterTimeout: NodeJS.Timeout | undefined = undefined;
   function handleKeydown(e: KeyboardEvent) {
     if(e.ctrlKey || e.metaKey || e.altKey) return;
     if(active.row >= guessesAllowed) return;
@@ -26,6 +27,8 @@
       if(active.column > 0) active.column -= 1;
       rows[active.row][active.column].letter = "";
     } else if(e.key === "Enter") {
+      if(enterTimeout) return;
+      enterTimeout = setTimeout(() => enterTimeout = undefined, 1000);
       if(active.column >= wordLength) {
         if($lobby.ping >= 500) {
           // below 500ms the loader just makes the app feel unresponsive unnecessarily
