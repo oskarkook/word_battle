@@ -15,42 +15,44 @@
   $: guessesAllowed = $game.game_definition.guesses_allowed;
   $: wordLength = $game.game_definition.word_length;
   $: rows = buildGrid($game.my_guessed_words, guessesAllowed, wordLength);
-  $: active = {row: $game.my_guessed_words.length, column: 0};
+  $: activeRow = $game.my_guessed_words.length;
+  let inEdit = "";
   let rowComponents: GridRow[] = [];
 
   let enterTimeout: NodeJS.Timeout | undefined = undefined;
   function handleKeydown(e: KeyboardEvent) {
     if(e.ctrlKey || e.metaKey || e.altKey) return;
-    if(active.row >= guessesAllowed) return;
+    if(activeRow >= guessesAllowed) return;
 
     if(e.key === "Backspace") {
-      if(active.column > 0) active.column -= 1;
-      rows[active.row][active.column].letter = "";
+      inEdit = inEdit.slice(0, -1);
     } else if(e.key === "Enter") {
       if(enterTimeout) return;
       enterTimeout = setTimeout(() => enterTimeout = undefined, 1000);
-      if(active.column >= wordLength) {
+      if(inEdit.length >= wordLength) {
         if($lobby.ping >= 500) {
           // below 500ms the loader just makes the app feel unresponsive unnecessarily
           loading = true;
         }
-        game.guess(rows[active.row].map(({ letter }) => letter))
+        game.guess(inEdit)
+          .then(() => {
+            inEdit = "";
+          })
           .catch(resp => {
             if(resp.r === "w") {
-              rowComponents[active.row].shake();
+              rowComponents[activeRow].shake();
             }
             alerts.push({ message: resp.m, time: 1500 });
           });
       } else {
-        rowComponents[active.row].shake();
+        rowComponents[activeRow].shake();
         alerts.push({ message: "Not enough letters", time: 1000 });
       }
     } else {
-      if(active.column >= wordLength) return;
+      if(inEdit.length >= wordLength) return;
       const letter = e.key.toUpperCase();
       if(!allowedLetters.includes(letter)) return;
-      rows[active.row][active.column].letter = letter;
-      active.column += 1;
+      inEdit += letter;
     }
   }
 </script>
@@ -59,9 +61,9 @@
 <GridContainer>
   {#each rows as row, i}
     <GridRow bind:this={rowComponents[i]}>
-      {#each row as {letter, type}}
-        <GridLetter {type} active={i === active.row && letter !== ""}>
-          {letter}
+      {#each row as {letter, type}, j}
+        <GridLetter {type} active={i === activeRow && inEdit.length > j}>
+          {i === activeRow ? (inEdit[j] || "") : letter}
         </GridLetter>
       {/each}
     </GridRow>

@@ -101,13 +101,13 @@ export const game = {
         });
     });
   },
-  guess: (letters: string[]) => {
+  guess: (guess: string) => {
     return new Promise<Classification[]>((resolve, reject) => {
-      channel.push("guess_word", { word: letters.join("") })
+      channel.push("guess_word", { word: guess })
         .receive("ok", resp => {
           const letterTypes: LetterType[] = resp.r.split("").map(letter => classifyLetter(letter));
           const classification: Classification[] = [];
-          letters.forEach((letter, i) => classification.push({ letter, type: letterTypes[i] }));
+          guess.split("").forEach((letter, i) => classification.push({ letter, type: letterTypes[i] }));
 
           update(state => {
             state.player_guesses[state.player_id].push(letterTypes);
