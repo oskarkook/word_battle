@@ -5,8 +5,8 @@ import { Channel, Socket } from "phoenix";
 import { writable } from "svelte/store";
 
 type PlayerId = string | number;
-interface GameState {
-  connected: boolean;
+export interface GameState {
+  state: "disconnected" | "connecting" | "waiting" | "running" | "completed";
   game_definition: {
     begin_at: string | undefined;
     finish_at: string | undefined;
@@ -63,75 +63,126 @@ function classifyMyGuesses(guesses: string[], letterTypes: LetterType[][]): Clas
   return result;
 }
 
-export const game = {
-  subscribe,
-  connect: (socket: Socket, {node, game_id, token}: GameInfo) => {
-    if(channel !== undefined) {
+function getGameState(gameDefinition: GameState["game_definition"]): GameState["state"] {
+  const now = new Date();
+  const beginAt = new Date(gameDefinition.begin_at);
+  const finishAt = new Date(gameDefinition.finish_at);
+
+  if(now < beginAt) return "waiting";
+  if(now < finishAt) return "running";
+  return "completed";
+}
+
+const defaultState: GameState = {
+  state: "disconnected",
+  game_definition: {
+    begin_at: undefined,
+    finish_at: undefined,
+    guesses_allowed: 6,
+    word_length: 5,
+  },
+  player_id: "0",
+  player_guesses: {
+    "0": [],
+  },
+  my_guessed_words: [],
+};
+
+export function createGameStore(socket: Socket) {
+  let channel: Channel | undefined;
+  let stateUpdateTimer: NodeJS.Timer | undefined;
+
+  function scheduleStateUpdate(state: GameState["state"], definition: GameState["game_definition"]) {
+    if(state !== "waiting" && state !== "running") {
+      stateUpdateTimer = undefined;
+      return;
+    }
+    
+    const reference: string = state === "waiting" ? definition.begin_at : definition.finish_at;
+    const refDate = new Date(reference);
+
+    stateUpdateTimer = setTimeout(() => {
+      update(prevState => ({...prevState, state: getGameState(definition)}));
+      scheduleStateUpdate(getGameState(definition), definition);
+    }, refDate.getTime() - Date.now());
+  }
+
+  const { subscribe, update, set } = writable<GameState>(defaultState);
+  return {
+    subscribe,
+    connect: ({node, game_id, token}: GameInfo) => {
+      if(channel !== undefined) {
+        channel.leave();
+      }
+      channel = socket.channel(`game:${node}:${game_id}`, {token});
+      update(state => ({...state, state: "connecting"}));
+      return new Promise<void>((resolve, reject) => {
+        channel.onClose((reason) => {
+          set(defaultState);
+          if(stateUpdateTimer) clearTimeout(stateUpdateTimer);
+          if(reason !== "leave") {
+            // "leave" is the reason when we purposefully disconnect
+            globalAlerts.push({message: "Disconnected from game", time: 1500});
+            clearLocalGameInfo();
+          }
+        });
+
+        channel.onError((reason) => {
+          if(reason !== undefined) {
+            globalAlerts.push({message: "Connection error!", time: 5000});
+          }
+        });
+
+        channel.join()
+          .receive("ok", resp => {
+            const player_guesses = classifyPlayerGuesses(resp.player_guesses);
+            const gameDefinition: GameState["game_definition"] = resp.game_definition;
+            const gameState = getGameState(gameDefinition);
+
+            scheduleStateUpdate(gameState, gameDefinition);
+
+            set({
+              state: gameState,
+              game_definition: gameDefinition,
+              player_id: resp.player_id,
+              player_guesses,
+              my_guessed_words: classifyMyGuesses(resp.my_guessed_words, player_guesses[resp.player_id]),
+            });
+            resolve();
+          })
+          .receive("error", resp => {
+            globalAlerts.push({message: resp.reason, time: 1500});
+            clearLocalGameInfo();
+            channel.leave();
+            reject();
+          });
+      });
+    },
+    guess: (guess: string) => {
+      return new Promise<Classification[]>((resolve, reject) => {
+        channel.push("guess_word", { word: guess })
+          .receive("ok", resp => {
+            const letterTypes: LetterType[] = resp.r.split("").map(letter => classifyLetter(letter));
+            const classification: Classification[] = [];
+            guess.split("").forEach((letter, i) => classification.push({ letter, type: letterTypes[i] }));
+
+            update(state => {
+              state.player_guesses[state.player_id].push(letterTypes);
+              state.my_guessed_words.push(classification);
+              return state;
+            });
+
+            resolve(classification);
+          })
+          .receive("error", resp => {
+            reject(resp);
+          });
+      });
+    },
+    leave: () => {
+      clearLocalGameInfo();
+      globalAlerts.push({message: "Left game", time: 1500});
       channel.leave();
     }
-    channel = socket.channel(`game:${node}:${game_id}`, {token});
-    update(state => ({...state, connected: true}));
-    return new Promise<void>((resolve, reject) => {
-      channel.onClose((reason) => {
-        update(state => ({...state, connected: false}));
-        if(reason !== "leave") {
-          // "leave" is the reason when we purposefully disconnect
-          globalAlerts.push({message: "Disconnected from game", time: 1500});
-          clearLocalGameInfo();
-        }
-      });
-
-      channel.onError((reason) => {
-        if(reason !== undefined) {
-          globalAlerts.push({message: "Connection error!", time: 5000});
-        }
-      });
-
-      channel.join()
-        .receive("ok", resp => {
-          const player_guesses = classifyPlayerGuesses(resp.player_guesses);
-
-          set({
-            connected: true,
-            game_definition: resp.game_definition,
-            player_id: resp.player_id,
-            player_guesses,
-            my_guessed_words: classifyMyGuesses(resp.my_guessed_words, player_guesses[resp.player_id]),
-          });
-          resolve();
-        })
-        .receive("error", resp => {
-          globalAlerts.push({message: resp.reason, time: 1500});
-          clearLocalGameInfo();
-          channel.leave();
-          reject();
-        });
-    });
-  },
-  guess: (guess: string) => {
-    return new Promise<Classification[]>((resolve, reject) => {
-      channel.push("guess_word", { word: guess })
-        .receive("ok", resp => {
-          const letterTypes: LetterType[] = resp.r.split("").map(letter => classifyLetter(letter));
-          const classification: Classification[] = [];
-          guess.split("").forEach((letter, i) => classification.push({ letter, type: letterTypes[i] }));
-
-          update(state => {
-            state.player_guesses[state.player_id].push(letterTypes);
-            state.my_guessed_words.push(classification);
-            return state;
-          });
-
-          resolve(classification);
-        })
-        .receive("error", resp => {
-          reject(resp);
-        });
-    });
-  },
-  leave: () => {
-    clearLocalGameInfo();
-    globalAlerts.push({message: "Left game", time: 1500});
-    channel.leave();
   }
-};
+}

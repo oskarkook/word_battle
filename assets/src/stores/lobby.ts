@@ -2,7 +2,7 @@ import { Channel, Socket } from "phoenix";
 import { writable } from "svelte/store";
 import { globalAlerts } from "$src/global";
 import { GameInfo, setLocalGameInfo } from "$src/helpers/gameInfo";
-import { game } from "$src/stores/game";
+import { createGameStore } from "$src/stores/game";
 
 export interface LobbyInfo {
   nodes: string[];
@@ -46,7 +46,7 @@ const { subscribe, update } = writable<LobbyInfo>({
 
 export const lobby = {
   subscribe,
-  connect: (socket: Socket) => {
+  connect: (socket: Socket, game: ReturnType<typeof createGameStore>) => {
     if(channel !== undefined) {
       channel.leave();
     }
@@ -66,8 +66,7 @@ export const lobby = {
       channel.on("game_join", (gameInfo: GameInfo) => {
         setLocalGameInfo(gameInfo);
         update(state => ({...state, queuedForNode: undefined}));
-        globalAlerts.push({ message: "Game found! Get ready!", time: 2500 });
-        game.connect(socket, gameInfo);
+        game.connect(gameInfo);
       });
 
       channel.join()

@@ -7,16 +7,18 @@
   import { createAlertsStore } from "$src/stores/alerts";
   import { globalAlerts } from "$src/global";
   import { lobby } from "$src/stores/lobby";
-  import { game } from "$src/stores/game";
+  import { createGameStore } from "$src/stores/game";
+  export let game: ReturnType<typeof createGameStore>;
 
   const alerts = createAlertsStore();
   let loading = false;
 
   $: guessesAllowed = $game.game_definition.guesses_allowed;
   $: wordLength = $game.game_definition.word_length;
-  $: rows = buildGrid($game.my_guessed_words, guessesAllowed, wordLength);
-  $: activeRow = $game.my_guessed_words.length;
-  let inEdit = "";
+  $: guessedRows = $game.my_guessed_words;
+  $: rows = buildGrid(guessedRows, guessesAllowed, wordLength);
+  $: activeRow = guessedRows.length;
+  $: inEdit = id ? "" : "";
   let rowComponents: GridRow[] = [];
 
   let enterTimeout: NodeJS.Timeout | undefined = undefined;

@@ -8,10 +8,10 @@
 
 <script lang="ts">
   import KeyboardKey from "./KeyboardKey.svelte";
-  import { game } from "$src/stores/game";
-  import { letterTypes } from "$src/helpers/letter";
+  import { Classification, letterTypes } from "$src/helpers/letter";
+  export let guessedWords: Classification[][];
 
-  $: letterMap = letterTypes($game.my_guessed_words);
+  $: letterMap = letterTypes(guessedWords);
 </script>
 
 <div class="w-full mt-0.5 sm:mt-2 px-1">
