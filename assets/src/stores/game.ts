@@ -20,22 +20,6 @@ export interface GameState {
   my_guessed_words: Classification[][],
 }
 
-let channel: Channel | undefined;
-const { subscribe, update, set } = writable<GameState>({
-  connected: false,
-  game_definition: {
-    begin_at: undefined,
-    finish_at: undefined,
-    guesses_allowed: 6,
-    word_length: 5,
-  },
-  player_id: "0",
-  player_guesses: {
-    "0": [],
-  },
-  my_guessed_words: [],
-});
-
 function classifyPlayerGuesses(guesses: {[id: PlayerId]: string[]}): GameState["player_guesses"] {
   const result: GameState["player_guesses"] = {};
   Object.keys(guesses).forEach(playerId => {
