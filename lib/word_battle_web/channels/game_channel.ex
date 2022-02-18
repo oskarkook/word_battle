@@ -58,13 +58,13 @@ defmodule WordBattleWeb.GameChannel do
     reply =
       cond do
         game_state == :completed ->
-          {:error, %{r: "s", m: "Game has ended"}}
+          {:error, %{r: "s", m: "Game has ended!"}}
 
         game_state == :waiting ->
-          {:error, %{r: "s", m: "Game has not started yet"}}
+          {:error, %{r: "s", m: "Game has not started yet!"}}
 
         !WordBattle.Words.is_valid_guess?(word) ->
-          {:error, %{r: "w", m: "Not in word list"}}
+          {:error, %{r: "w", m: "Not in word list!"}}
 
         true ->
           :ok =
