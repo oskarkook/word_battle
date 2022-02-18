@@ -8,6 +8,7 @@
   import { globalAlerts } from "$src/global";
   import { lobby } from "$src/stores/lobby";
   import { createGameStore } from "$src/stores/game";
+  import GameProgress from "./GameProgress.svelte";
   export let game: ReturnType<typeof createGameStore>;
 
   const alerts = createAlertsStore();
@@ -76,6 +77,7 @@
 </script>
 
 <svelte:window on:keydown={handleKeydown}/>
+<GameProgress game={game}/>
 <GridContainer>
   {#each rows as row, i}
     <GridRow bind:this={rowComponents[i]}>
