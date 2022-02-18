@@ -57,6 +57,22 @@
       inEdit += letter;
     }
   }
+
+  $: state = $game.state; // https://github.com/sveltejs/svelte/issues/4535
+  $: {
+    let message: string | undefined;
+    if(state === "waiting") {
+      message = "Game found! Get ready!";
+    } else if(state === "running") {
+      message = "Game has started!";
+    } else if(state === "completed") {
+      message = "Game has ended!";
+    }
+
+    if(message) {
+      alerts.push({message, time: 1500});
+    }
+  }
 </script>
 
 <svelte:window on:keydown={handleKeydown}/>
