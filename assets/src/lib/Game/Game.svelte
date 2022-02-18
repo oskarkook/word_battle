@@ -14,6 +14,7 @@
   const alerts = createAlertsStore();
   let loading = false;
 
+  $: id = $game.id;
   $: guessesAllowed = $game.game_definition.guesses_allowed;
   $: wordLength = $game.game_definition.word_length;
   $: guessedRows = $game.my_guessed_words;
@@ -78,17 +79,19 @@
 
 <svelte:window on:keydown={handleKeydown}/>
 <GameProgress game={game}/>
-<GridContainer>
-  {#each rows as row, i}
-    <GridRow bind:this={rowComponents[i]}>
-      {#each row as {letter, type}, j}
-        <GridLetter {type} active={i === activeRow && inEdit.length > j}>
-          {i === activeRow ? (inEdit[j] || "") : letter}
-        </GridLetter>
-      {/each}
-    </GridRow>
-  {/each}
-</GridContainer>
+{#key id}
+  <GridContainer>
+    {#each rows as row, i}
+      <GridRow bind:this={rowComponents[i]}>
+        {#each row as {letter, type}, j}
+          <GridLetter {type} active={i === activeRow && inEdit.length > j}>
+            {i === activeRow ? (inEdit[j] || "") : letter}
+          </GridLetter>
+        {/each}
+      </GridRow>
+    {/each}
+  </GridContainer>
+{/key}
 <div
   style="border-top-color:transparent"
   class:hidden={!loading}

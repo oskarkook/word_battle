@@ -6,6 +6,7 @@ import { writable } from "svelte/store";
 
 type PlayerId = string | number;
 export interface GameState {
+  id: string | undefined;
   state: "disconnected" | "connecting" | "waiting" | "running" | "completed";
   game_definition: {
     begin_at: string | undefined;
@@ -58,6 +59,7 @@ function getGameState(gameDefinition: GameState["game_definition"]): GameState["
 }
 
 const defaultState: GameState = {
+  id: undefined,
   state: "disconnected",
   game_definition: {
     begin_at: undefined,
@@ -99,7 +101,7 @@ export function createGameStore(socket: Socket) {
         channel.leave();
       }
       channel = socket.channel(`game:${node}:${game_id}`, {token});
-      update(state => ({...state, state: "connecting"}));
+      update(state => ({...state, id: game_id, state: "connecting"}));
       return new Promise<void>((resolve, reject) => {
         channel.onClose((reason) => {
           set(defaultState);
@@ -126,6 +128,7 @@ export function createGameStore(socket: Socket) {
             scheduleStateUpdate(gameState, gameDefinition);
 
             set({
+              id: game_id,
               state: gameState,
               game_definition: gameDefinition,
               player_id: resp.player_id,
