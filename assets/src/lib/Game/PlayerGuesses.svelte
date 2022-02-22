@@ -1,11 +1,12 @@
 <script lang="ts">
   import { Classification, LetterType } from "$src/helpers/letter";
-  import { createGameStore, Game } from "$src/stores/game";
+  import { createGameStore, Game, PlayerId } from "$src/stores/game";
   import GuessResult from "$src/lib/GuessResult/GuessResult.svelte";
   export let game: ReturnType<typeof createGameStore>; 
 
   $: player_guesses = $game.player_guesses;
-  $: player_id = String($game.player_id);
+  $: player_id = $game.player_id;
+  $: view_player_id = $game.view_player_id;
   $: wordLength = $game.game_definition.word_length;
 
   type Counts = Record<LetterType, number>;
@@ -38,7 +39,7 @@
       });
   }
 
-  function rankPlayerGuesses(players: Game["player_guesses"]): Array<{id: string, guess: Classification[]}> {
+  function rankPlayerGuesses(players: Game["player_guesses"]): Array<{id: PlayerId, guess: Classification[]}> {
     const idMap = new Map<Classification[], string>();
     const bestGuesses = Object.keys(players).map(id => {
       const guesses = players[id];
@@ -58,12 +59,21 @@
     });
   }
 
+  function classes(id: PlayerId) {
+    if(id === player_id) {
+      return "rounded p-1 bg-gray-200";
+    } else if(id === view_player_id) {
+      return "drop-shadow-md";
+    }
+    return "";
+  }
+
   $: rankedGuesses = rankPlayerGuesses(player_guesses);
 </script>
 
 <div class="flex flex-col mx-2 mt-7">
   {#each rankedGuesses as {id, guess}}
-    <div class="flex px-1 {id === player_id ? "bg-gray-200 rounded p-1" : ""}">
+    <div class="flex cursor-pointer px-1 {classes(id)}" on:click={() => game.viewPlayer(id)}>
       {#if guess !== undefined}
         {#each guess as {letter, type}}
           <GuessResult type={type}/>

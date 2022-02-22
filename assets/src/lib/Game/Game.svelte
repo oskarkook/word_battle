@@ -18,7 +18,10 @@
   $: id = $game.id;
   $: guessesAllowed = $game.game_definition.guesses_allowed;
   $: wordLength = $game.game_definition.word_length;
-  $: guessedRows = $game.player_guesses[$game.player_id];
+  $: playerGuesses = $game.player_guesses;
+  $: playerId = $game.player_id;
+  $: viewPlayerId = $game.view_player_id;
+  $: guessedRows = playerGuesses[viewPlayerId];
   $: rows = buildGrid(guessedRows, guessesAllowed, wordLength);
   $: activeRow = guessedRows.length;
 
@@ -30,6 +33,7 @@
     if(e.ctrlKey || e.metaKey || e.altKey) return;
     if(activeRow >= guessesAllowed) return;
     if($game.state !== "running") return;
+    if(viewPlayerId !== playerId) return;
 
     if(e.key === "Backspace") {
       inEdit = inEdit.slice(0, -1);
@@ -107,7 +111,7 @@
           <GridRow bind:this={rowComponents[i]}>
             {#each row as {letter, type}, j}
               <GridLetter {type} active={i === activeRow && inEdit.length > j}>
-                {i === activeRow ? (inEdit[j] || "") : letter}
+                {(i === activeRow ? inEdit[j] : letter) || ""}
               </GridLetter>
             {/each}
           </GridRow>
@@ -119,7 +123,6 @@
       class:hidden={!loading}
       class="absolute flex z-10 w-8 h-8 border-4 border-cyan-500 border-solid rounded-full animate-spin"
     />
-    <Alert alerts={$alerts.concat($globalAlerts)}/>
   </div>
   <div class="flex flex-1">
     {#if id !== undefined}

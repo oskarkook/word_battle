@@ -10,11 +10,12 @@
   import KeyboardKey from "./KeyboardKey.svelte";
   import { Classification, letterTypes } from "$src/helpers/letter";
   export let guessedWords: Classification[][];
+  export let disabled = false;
 
   $: letterMap = letterTypes(guessedWords);
 </script>
 
-<div class="w-full mt-0.5 sm:mt-2 px-1">
+<div class="w-full mt-0.5 sm:mt-2 px-1 {disabled && "opacity-30 pointer-events-none"}">
   <div class="flex justify-center mb-1 touch-manipulation">
     {#each rows[0] as key}
       <KeyboardKey value={key} type={letterMap.get(key)} class="grow"/>

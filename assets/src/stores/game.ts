@@ -4,7 +4,7 @@ import { Classification, classifyLetter } from "$src/helpers/letter";
 import { Channel, Socket } from "phoenix";
 import { writable } from "svelte/store";
 
-type PlayerId = string | number;
+export type PlayerId = string | number;
 export interface Game {
   id: string | undefined;
   state: "disconnected" | "connecting" | "waiting" | "running" | "player-done" | "completed";
@@ -15,6 +15,7 @@ export interface Game {
     word_length: number;
   };
   player_id: PlayerId;
+  view_player_id: PlayerId;
   player_guesses: {
     [id: PlayerId]: Classification[][];
   },
@@ -79,6 +80,7 @@ const defaultGame: Game = {
     word_length: 5,
   },
   player_id: "0",
+  view_player_id: "0",
   player_guesses: {
     "0": [],
   },
@@ -160,7 +162,8 @@ export function createGameStore(socket: Socket) {
               ...defaultGame,
               id: game_id,
               game_definition: resp.game_definition,
-              player_id: resp.player_id,
+              player_id: String(resp.player_id),
+              view_player_id: String(resp.player_id),
               player_guesses: parsePlayerGuesses(resp.player_guesses),
               solution: resp.solution,
             };
@@ -202,6 +205,9 @@ export function createGameStore(socket: Socket) {
       if(channel) {
         channel.leave();
       }
+    },
+    viewPlayer: (id: PlayerId) => {
+      update(game => ({...game, view_player_id: id}));
     }
   }
 }
