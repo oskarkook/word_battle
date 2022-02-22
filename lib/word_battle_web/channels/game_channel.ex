@@ -63,18 +63,20 @@ defmodule WordBattleWeb.GameChannel do
           {:error, %{r: "w", m: "Not in word list!"}}
 
         true ->
+          player_id = assigns.player_id
+
           result =
             GameState.add_player_guess(
               game_definition.node,
               game_definition.id,
-              assigns.player_id,
+              player_id,
               word
             )
 
           case result do
             :ok ->
               mask = mask_guess(word, game_definition.solution)
-              # TODO: broadcast
+              Phoenix.Channel.broadcast_from(socket, "player_guess", %{id: player_id, mask: mask})
               {:ok, %{r: mask}}
 
             _other ->

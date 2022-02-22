@@ -2,7 +2,7 @@ import { globalAlerts } from "$src/global";
 import { clearLocalGameInfo, GameInfo } from "$src/helpers/gameInfo";
 import { Classification, classifyLetter } from "$src/helpers/letter";
 import { Channel, Socket } from "phoenix";
-import { writable, get } from "svelte/store";
+import { writable } from "svelte/store";
 
 type PlayerId = string | number;
 export interface Game {
@@ -145,6 +145,13 @@ export function createGameStore(socket: Socket) {
           if(reason !== undefined) {
             globalAlerts.push({message: "Connection error!", time: 5000});
           }
+        });
+
+        channel.on("player_guess", (resp) => {
+          update(game => {
+            game.player_guesses[resp.id].push(parseGuess([undefined, resp.mask]));
+            return game;
+          });
         });
 
         channel.join()
