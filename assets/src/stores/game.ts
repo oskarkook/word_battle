@@ -16,34 +16,30 @@ export interface GameState {
   };
   player_id: PlayerId;
   player_guesses: {
-    [id: PlayerId]: LetterType[][];
+    [id: PlayerId]: Classification[][];
   },
-  my_guessed_words: Classification[][],
 }
 
-function classifyPlayerGuesses(guesses: {[id: PlayerId]: string[]}): GameState["player_guesses"] {
+type GuessMask = string;
+type RemoteGuess = [string | null, GuessMask];
+function parseGuess([word, mask]: RemoteGuess): Classification[] {
+  const classification: Classification[] = [];
+  for(let i = 0; i < mask.length; i++) {
+    const type = classifyLetter(mask[i]);
+    const letter = word ? word[i] : undefined;
+    classification.push({letter, type});
+  }
+
+  return classification;
+}
+
+function parsePlayerGuesses(guesses: {[id: PlayerId]: RemoteGuess[]}): GameState["player_guesses"] {
   const result: GameState["player_guesses"] = {};
   Object.keys(guesses).forEach(playerId => {
     if(!result[playerId]) result[playerId] = [];
     guesses[playerId].forEach(guess => {
-      const letters = guess.split("");
-      result[playerId].push(letters.map(letter => classifyLetter(letter)));
+      result[playerId].push(parseGuess(guess));
     });
-  });
-  return result;
-}
-
-function classifyMyGuesses(guesses: string[], letterTypes: LetterType[][]): Classification[][] {
-  const result: Classification[][] = [];
-  guesses.forEach((guess, i) => {
-    const classification: Classification[] = [];
-    guess.split("").forEach((letter, j) => {
-      classification.push({
-        letter,
-        type: letterTypes[i][j],
-      });
-    });
-    result.push(classification);
   });
   return result;
 }
@@ -71,7 +67,6 @@ const defaultState: GameState = {
   player_guesses: {
     "0": [],
   },
-  my_guessed_words: [],
 };
 
 export function createGameStore(socket: Socket) {
@@ -121,19 +116,19 @@ export function createGameStore(socket: Socket) {
 
         channel.join()
           .receive("ok", resp => {
-            const player_guesses = classifyPlayerGuesses(resp.player_guesses);
+            const player_guesses = parsePlayerGuesses(resp.player_guesses);
             const gameDefinition: GameState["game_definition"] = resp.game_definition;
             const gameState = getGameState(gameDefinition);
 
             scheduleStateUpdate(gameState, gameDefinition);
 
             set({
+              ...defaultState,
               id: game_id,
               state: gameState,
               game_definition: gameDefinition,
               player_id: resp.player_id,
               player_guesses,
-              my_guessed_words: classifyMyGuesses(resp.my_guessed_words, player_guesses[resp.player_id]),
             });
             resolve();
           })
@@ -148,14 +143,11 @@ export function createGameStore(socket: Socket) {
     guess: (guess: string) => {
       return new Promise<Classification[]>((resolve, reject) => {
         channel.push("guess_word", { word: guess })
-          .receive("ok", resp => {
-            const letterTypes: LetterType[] = resp.r.split("").map(letter => classifyLetter(letter));
-            const classification: Classification[] = [];
-            guess.split("").forEach((letter, i) => classification.push({ letter, type: letterTypes[i] }));
+          .receive("ok", (resp: {r: GuessMask}) => {
+            const classification: Classification[] = parseGuess([guess, resp.r]);
 
             update(state => {
-              state.player_guesses[state.player_id].push(letterTypes);
-              state.my_guessed_words.push(classification);
+              state.player_guesses[state.player_id].push(classification);
               return state;
             });
 

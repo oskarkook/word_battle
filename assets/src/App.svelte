@@ -60,6 +60,6 @@
         </div>
       </div>
     </div>
-    <Keyboard guessedWords={$game.my_guessed_words}/>
+    <Keyboard guessedWords={$game.player_guesses[$game.player_id]}/>
   </div>
 </main>

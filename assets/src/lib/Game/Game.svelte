@@ -17,7 +17,7 @@
   $: id = $game.id;
   $: guessesAllowed = $game.game_definition.guesses_allowed;
   $: wordLength = $game.game_definition.word_length;
-  $: guessedRows = $game.my_guessed_words;
+  $: guessedRows = $game.player_guesses[$game.player_id];
   $: rows = buildGrid(guessedRows, guessesAllowed, wordLength);
   $: activeRow = guessedRows.length;
   $: inEdit = id ? "" : "";

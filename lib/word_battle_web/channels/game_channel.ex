@@ -6,31 +6,27 @@ defmodule WordBattleWeb.GameChannel do
   def join("game:" <> node_and_id, %{"token" => token}, socket) do
     {node, game_id} = parse_node_and_id(node_and_id)
 
-    with {:ok, {node, game_id, player_id}} <- GameState.verify(node, game_id, token),
+    with {:ok, {node, game_id, my_player_id}} <- GameState.verify(node, game_id, token),
          {:ok, game_info} <- GameState.get_info(node, game_id) do
       %{game_definition: game_definition, player_guesses: player_guesses} = game_info
-      solution_map = new_letter_map(game_definition.solution)
 
       reply = %{
-        player_id: player_id,
+        player_id: my_player_id,
         game_definition:
-          game_definition
-          |> Map.take([:begin_at, :finish_at, :word_length, :guesses_allowed]),
+          Map.take(
+            game_definition,
+            [:begin_at, :finish_at, :word_length, :guesses_allowed]
+          ),
         player_guesses:
           player_guesses
-          |> Enum.map(fn {player_id, guesses} ->
-            guesses = Enum.map(guesses, &obfuscate_guess(&1, solution_map))
-            {player_id, guesses}
-          end)
-          |> Enum.into(%{}),
-        my_guessed_words: Map.get(player_guesses, player_id, [])
+          |> mask_player_guesses(game_definition.solution)
+          |> hide_other_players(my_player_id)
       }
 
       socket =
         assign(socket,
           game_definition: game_definition,
-          player_id: player_id,
-          solution_map: solution_map
+          player_id: my_player_id
         )
 
       disconnect_at(game_definition.dead_at)
@@ -75,9 +71,9 @@ defmodule WordBattleWeb.GameChannel do
               word
             )
 
-          obfuscated_guess = obfuscate_guess(word, assigns.solution_map)
+          mask = mask_guess(word, game_definition.solution)
           # TODO: broadcast
-          {:ok, %{r: obfuscated_guess}}
+          {:ok, %{r: mask}}
       end
 
     {:reply, reply, socket}
@@ -88,9 +84,40 @@ defmodule WordBattleWeb.GameChannel do
     {:stop, :normal, socket}
   end
 
-  defp obfuscate_guess(guess, solution_map) do
+  defp parse_node_and_id(string) when is_binary(string) do
+    [node, id] = String.split(string, ":", parts: 2)
+    {String.to_existing_atom(node), id}
+  end
+
+  defp disconnect_at(dead_at) do
+    now = DateTime.utc_now()
+    Process.send_after(self(), :disconnect, DateTime.diff(dead_at, now, :millisecond))
+  end
+
+  defp new_letter_map(word) when is_binary(word) do
+    for {letter, i} <- String.graphemes(word) |> Enum.with_index(), reduce: %{} do
+      acc -> Map.update(acc, letter, [i], fn positions -> [i | positions] end)
+    end
+  end
+
+  defp mask_player_guesses(player_guesses, solution) do
+    letter_map = new_letter_map(solution)
+
+    for {player_id, words} <- player_guesses, into: %{} do
+      masks = Enum.map(words, &mask_guess(&1, letter_map))
+      guesses = Enum.zip_with(words, masks, & &1)
+      {player_id, guesses}
+    end
+  end
+
+  defp mask_guess(guess, solution) when is_binary(solution) do
+    letter_map = new_letter_map(solution)
+    mask_guess(guess, letter_map)
+  end
+
+  defp mask_guess(guess, letter_map) when is_map(letter_map) do
     for {letter, position} <- String.graphemes(guess) |> Enum.with_index(), into: <<>> do
-      letter_positions = Map.get(solution_map, letter)
+      letter_positions = Map.get(letter_map, letter)
 
       cond do
         letter_positions == nil -> "0"
@@ -100,19 +127,14 @@ defmodule WordBattleWeb.GameChannel do
     end
   end
 
-  defp new_letter_map(word) when is_binary(word) do
-    for {letter, i} <- String.graphemes(word) |> Enum.with_index(), reduce: %{} do
-      acc -> Map.update(acc, letter, [i], fn positions -> [i | positions] end)
+  defp hide_other_players(player_guesses, kept_player_id) do
+    for {player_id, guesses} <- player_guesses, into: %{} do
+      if player_id != kept_player_id do
+        guesses = Enum.map(guesses, fn [_word, mask] -> [nil, mask] end)
+        {player_id, guesses}
+      else
+        {player_id, guesses}
+      end
     end
-  end
-
-  defp parse_node_and_id(string) when is_binary(string) do
-    [node, id] = String.split(string, ":", parts: 2)
-    {String.to_existing_atom(node), id}
-  end
-
-  defp disconnect_at(dead_at) do
-    now = DateTime.utc_now()
-    Process.send_after(self(), :disconnect, DateTime.diff(dead_at, now, :millisecond))
   end
 end

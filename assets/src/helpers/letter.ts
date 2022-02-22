@@ -20,7 +20,7 @@ export function classifyLetter(descriptor: string): LetterType {
   }
 }
 
-export type Classification = {letter: string, type: LetterType};
+export type Classification = {letter: string | undefined, type: LetterType};
 export function buildGrid(guesses: Classification[][], rows: number, columns: number): Classification[][] {
   if(guesses.length === rows) return guesses;
   const emptyRows: Classification[][] = [];
