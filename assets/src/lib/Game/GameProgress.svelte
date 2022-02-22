@@ -1,12 +1,12 @@
 <script lang="ts">
   import { colorClasses } from "$src/helpers/letter";
   import ProgressBar from "$src/lib/ProgressBar/ProgressBar.svelte";
-  import { createGameStore, GameState } from "$src/stores/game";
+  import { createGameStore, Game } from "$src/stores/game";
   export let game: ReturnType<typeof createGameStore>;
 
-  function getColorClass(state: GameState["state"]): string | undefined {
+  function getColorClass(state: Game["state"]): string | undefined {
     if(state === "waiting") return colorClasses["present"];
-    if(state === "running") return colorClasses["correct"];
+    if(state === "running" || state === "player-done") return colorClasses["correct"];
     return undefined;
   }
   
@@ -21,7 +21,7 @@
       if($game.state === "waiting") {
         fromDate = new Date();
         toDate = new Date($game.game_definition.begin_at);
-      } else if($game.state === "running") {
+      } else if($game.state === "running" || $game.state === "player-done") {
         fromDate = new Date($game.game_definition.begin_at);
         toDate = new Date($game.game_definition.finish_at);
       }

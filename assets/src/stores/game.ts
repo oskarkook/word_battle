@@ -5,9 +5,9 @@ import { Channel, Socket } from "phoenix";
 import { writable, get } from "svelte/store";
 
 type PlayerId = string | number;
-export interface GameState {
+export interface Game {
   id: string | undefined;
-  state: "disconnected" | "connecting" | "waiting" | "running" | "completed";
+  state: "disconnected" | "connecting" | "waiting" | "running" | "player-done" | "completed";
   game_definition: {
     begin_at: string | undefined;
     finish_at: string | undefined;
@@ -34,8 +34,8 @@ function parseGuess([word, mask]: RemoteGuess): Classification[] {
   return classification;
 }
 
-function parsePlayerGuesses(guesses: {[id: PlayerId]: RemoteGuess[]}): GameState["player_guesses"] {
-  const result: GameState["player_guesses"] = {};
+function parsePlayerGuesses(guesses: {[id: PlayerId]: RemoteGuess[]}): Game["player_guesses"] {
+  const result: Game["player_guesses"] = {};
   Object.keys(guesses).forEach(playerId => {
     if(!result[playerId]) result[playerId] = [];
     guesses[playerId].reverse().forEach(guess => {
@@ -45,17 +45,31 @@ function parsePlayerGuesses(guesses: {[id: PlayerId]: RemoteGuess[]}): GameState
   return result;
 }
 
-function getGameState(gameDefinition: GameState["game_definition"]): GameState["state"] {
+function updateGameState(game: Game): void {
   const now = new Date();
-  const beginAt = new Date(gameDefinition.begin_at);
-  const finishAt = new Date(gameDefinition.finish_at);
+  const beginAt = new Date(game.game_definition.begin_at);
 
-  if(now < beginAt) return "waiting";
-  if(now < finishAt) return "running";
-  return "completed";
+  if(now < beginAt) {
+    game.state = "waiting";
+    return;
+  }
+
+  const guesses = game.player_guesses[game.player_id];
+  if(game.solution === undefined && guesses.length > 0 && guesses[guesses.length - 1].every(({type}) => type === "correct")) {
+    game.solution = guesses[guesses.length - 1].map(({letter}) => letter).join("");
+  }
+
+  const finishAt = new Date(game.game_definition.finish_at);
+  if(now >= finishAt) {
+    game.state = "completed";
+  } else if(game.solution !== undefined || guesses.length === game.game_definition.guesses_allowed) {
+    game.state = "player-done";
+  } else {
+    game.state = "running";
+  }
 }
 
-const defaultState: GameState = {
+const defaultGame: Game = {
   id: undefined,
   state: "disconnected",
   game_definition: {
@@ -74,11 +88,10 @@ const defaultState: GameState = {
 export function createGameStore(socket: Socket) {
   let channel: Channel | undefined;
   let stateUpdateTimer: NodeJS.Timer | undefined;
-  const store = writable<GameState>(defaultState);
-  const { subscribe, update, set } = store;
+  const { subscribe, update, set } = writable<Game>(defaultGame);
 
-  function scheduleStateUpdate(state: GameState["state"], definition: GameState["game_definition"]) {
-    if(state === "completed" && get(store).solution === undefined) {
+  function scheduleStateUpdate(game: Game) {
+    if(game.state === "completed" && game.solution === undefined) {
       channel.push("refetch_state", {})
         .receive("ok", (resp) => {
           update(prevState => ({
@@ -89,17 +102,20 @@ export function createGameStore(socket: Socket) {
         });
     }
 
-    if(state !== "waiting" && state !== "running") {
+    if(game.state !== "waiting" && game.state !== "running" && game.state !== "player-done") {
       stateUpdateTimer = undefined;
       return;
     }
     
-    const reference: string = state === "waiting" ? definition.begin_at : definition.finish_at;
+    const reference: string = game.state === "waiting" ? game.game_definition.begin_at : game.game_definition.finish_at;
     const refDate = new Date(reference);
 
     stateUpdateTimer = setTimeout(() => {
-      update(prevState => ({...prevState, state: getGameState(definition)}));
-      scheduleStateUpdate(getGameState(definition), definition);
+      update(game => {
+        updateGameState(game);
+        scheduleStateUpdate(game);
+        return game;
+      });
     }, refDate.getTime() - Date.now());
   }
 
@@ -113,7 +129,7 @@ export function createGameStore(socket: Socket) {
       update(state => ({...state, id: game_id, state: "connecting"}));
       return new Promise<void>((resolve, reject) => {
         channel.onClose((reason) => {
-          set(defaultState);
+          set(defaultGame);
           if(stateUpdateTimer) clearTimeout(stateUpdateTimer);
           if(reason !== "leave") {
             // "leave" is the reason when we purposefully disconnect
@@ -130,20 +146,18 @@ export function createGameStore(socket: Socket) {
 
         channel.join()
           .receive("ok", resp => {
-            const player_guesses = parsePlayerGuesses(resp.player_guesses);
-            const gameDefinition: GameState["game_definition"] = resp.game_definition;
-            const gameState = getGameState(gameDefinition);
-
-            set({
-              ...defaultState,
+            const game: Game = {
+              ...defaultGame,
               id: game_id,
-              state: gameState,
-              game_definition: gameDefinition,
+              game_definition: resp.game_definition,
               player_id: resp.player_id,
-              player_guesses,
+              player_guesses: parsePlayerGuesses(resp.player_guesses),
               solution: resp.solution,
-            });
-            scheduleStateUpdate(gameState, gameDefinition);
+            };
+            updateGameState(game);
+
+            set(game);
+            scheduleStateUpdate(game);
             resolve();
           })
           .receive("error", resp => {
@@ -160,9 +174,10 @@ export function createGameStore(socket: Socket) {
           .receive("ok", (resp: {r: GuessMask}) => {
             const classification: Classification[] = parseGuess([guess, resp.r]);
 
-            update(state => {
-              state.player_guesses[state.player_id].push(classification);
-              return state;
+            update(game => {
+              game.player_guesses[game.player_id].push(classification);
+              updateGameState(game);
+              return game;
             });
 
             resolve(classification);

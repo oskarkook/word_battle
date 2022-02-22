@@ -28,7 +28,7 @@
   function handleKeydown(e: KeyboardEvent) {
     if(e.ctrlKey || e.metaKey || e.altKey) return;
     if(activeRow >= guessesAllowed) return;
-    if($game.state === "completed") return;
+    if($game.state !== "running") return;
 
     if(e.key === "Backspace") {
       inEdit = inEdit.slice(0, -1);
@@ -70,6 +70,12 @@
       alerts.push({message: "Game found! Get ready!", time: 1500});
     } else if(state === "running") {
       alerts.push({message: "Game has started!", time: 1500});
+    } else if(state === "player-done") {
+      if(solution !== undefined) {
+        alerts.push({message: `Well done! The word was ${solution}`, time: 5000});
+      } else {
+        alerts.push({message: "You ran out of guesses!", time: 5000});
+      }
     } else if(state === "completed" && solution !== undefined) {
       alerts.push({message: `Game has ended! The word was ${solution}`});
       inEdit = "";
