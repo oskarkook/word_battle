@@ -1,17 +1,7 @@
 defmodule WordBattleWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :word_battle
 
-  # The session will be stored in the cookie and signed,
-  # this means its contents can be read but not tampered with.
-  # Set :encryption_salt if you would also like to encrypt it.
-  @session_options [
-    store: :cookie,
-    key: "_word_battle_key",
-    signing_salt: "heWGxOfd"
-  ]
-
-  # socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
-  socket "/game", WordBattleWeb.GameSocket, websocket: [connect_info: [session: @session_options]]
+  socket "/game", WordBattleWeb.GameSocket, websocket: []
 
   # Serve at "/" the static files from "priv/static" directory.
   #
@@ -41,6 +31,5 @@ defmodule WordBattleWeb.Endpoint do
 
   plug Plug.MethodOverride
   plug Plug.Head
-  plug Plug.Session, @session_options
   plug WordBattleWeb.Router
 end
