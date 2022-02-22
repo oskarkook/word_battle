@@ -8,8 +8,6 @@ import Config
 # The block below contains prod specific runtime configuration.
 
 config :word_battle, WordBattle.Words,
-  solutions_path: System.fetch_env!("SOLUTIONS"),
-  valid_guesses_path: System.fetch_env!("VALID_GUESSES"),
   word_length: System.get_env("WORD_LENGTH", "5") |> String.to_integer()
 
 # Start the phoenix server if environment is set and running in a release
@@ -17,7 +15,20 @@ if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
   config :word_battle, WordBattleWeb.Endpoint, server: true
 end
 
+if config_env() == :dev do
+  default_solutions_path = Path.join([File.cwd!(), "words", "solutions.txt"])
+  default_guesses_path = Path.join([File.cwd!(), "words", "valid_guesses.txt"])
+
+  config :word_battle, WordBattle.Words,
+    solutions_path: System.get_env("SOLUTIONS", default_solutions_path),
+    valid_guesses_path: System.get_env("VALID_GUESSES", default_guesses_path)
+end
+
 if config_env() == :prod do
+  config :word_battle, WordBattle.Words,
+    solutions_path: System.fetch_env!("SOLUTIONS"),
+    valid_guesses_path: System.fetch_env!("VALID_GUESSES")
+
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
   # want to use a different value for prod and you most likely don't want
@@ -45,13 +56,18 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
-  # ## Using releases
-  #
-  # If you are doing OTP releases, you need to instruct Phoenix
-  # to start each relevant endpoint:
-  #
-  #     config :word_battle, WordBattleWeb.Endpoint, server: true
-  #
-  # Then you can assemble a release by calling `mix release`.
-  # See `mix help release` for more information.
+  app_name = System.fetch_env!("FLY_APP_NAME")
+
+  config :libcluster,
+    debug: true,
+    topologies: [
+      fly6pn: [
+        strategy: Cluster.Strategy.DNSPoll,
+        config: [
+          polling_interval: 5_000,
+          query: "#{app_name}.internal",
+          node_basename: app_name
+        ]
+      ]
+    ]
 end

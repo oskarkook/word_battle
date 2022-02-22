@@ -5,12 +5,40 @@ Multiplayer word guessing game, built with:
 - Tailwind
 
 ## Development
+The back-end requires word lists for valid guesses and solutions. By default, these are loaded from
+`./words/valid_guesses.txt` and `./words/solutions.txt`. These files are not provided with the
+repository, so you should create your word lists there. Each word must be on its own line:
+```
+weary
+pilot
+pills
+blush
+focal
+```
+
+After creating the word files, run the following:
 ```
 mix setup
 mix phx.server
 ```
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+
+### Deployment
+For deployment, Mix releases and Docker are used. The [`Dockerfile`](./Dockerfile) handles this
+automatically:
+```
+docker build .
+```
+
+During the Docker build, word lists are automatically copied from `./words/solutions.txt` and
+`./words/valid_guesses.txt` and bundled into the image. This allows for an easier deployment without
+any static storage requirements.
+
+## Environment variables
+- `SOLUTIONS` - Required. Path to the file with solution words
+- `VALID_GUESSES` - Required. Path to the file with valid guess words
+- `WORD_LENGTH` - Optional, defaults to `5`. Any words that are not this length will be discarded.
 
 ## Back-end architecture
 The lifecycle of a player is as follows:
