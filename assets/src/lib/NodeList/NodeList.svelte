@@ -5,15 +5,19 @@
   function handleChange(e) {
     lobby.setNode(e.target.value);
   }
+
+  function prettify(name: string) {
+    return name.split("@")[0];
+  }
 </script>
 
 <Button container class="w-10 overflow-x-hidden">
   <select class="px-2 py-1 appearance-none text-center bg-transparent font-bold cursor-pointer" value={$lobby.default_node} on:change={handleChange}>
     {#if !$lobby.nodes.includes($lobby.default_node)}
-      <option>{$lobby.default_node}</option>
+      <option value={$lobby.default_node}>{prettify($lobby.default_node)}</option>
     {/if}
     {#each $lobby.nodes as node}
-      <option>{node}</option>
+      <option value={node}>{prettify(node)}</option>
     {/each}
   </select>
 </Button>
