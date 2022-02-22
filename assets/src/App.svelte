@@ -14,16 +14,13 @@
     theme = otherTheme;
   }
 
-  function joinQueue() {
-    lobby.joinQueue($lobby.default_node);
-  }
-
   function leaveQueue() {
     lobby.leaveQueue();
   }
 
-  function leaveGame() {
+  function newGame() {
     game.leave();
+    lobby.joinQueue($lobby.default_node);
   }
 </script>
 
@@ -33,10 +30,8 @@
   </h1>
   <div class="flex flex-col justify-center items-center w-100 h-100 max-w-screen-sm mx-auto">
     <div class="m-0.5 sm:m-1">
-      {#if $game.state !== "disconnected"}
-        <Button on:click={leaveGame}>Leave game</Button>
-      {:else if $lobby.queuedForNode === undefined}
-        <Button on:click={joinQueue}>Find game</Button>
+      {#if $lobby.queuedForNode === undefined}
+        <Button on:click={newGame}>New game</Button>
       {:else}
         <Button class="animate-pulse" on:click={leaveQueue}>Searching...</Button>
       {/if}

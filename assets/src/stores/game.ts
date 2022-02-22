@@ -132,6 +132,7 @@ export function createGameStore(socket: Socket) {
       return new Promise<void>((resolve, reject) => {
         channel.onClose((reason) => {
           set(defaultGame);
+          channel = undefined;
           if(stateUpdateTimer) clearTimeout(stateUpdateTimer);
           if(reason !== "leave") {
             // "leave" is the reason when we purposefully disconnect
@@ -191,8 +192,9 @@ export function createGameStore(socket: Socket) {
     },
     leave: () => {
       clearLocalGameInfo();
-      globalAlerts.push({message: "Left game", time: 1500});
-      channel.leave();
+      if(channel) {
+        channel.leave();
+      }
     }
   }
 }
