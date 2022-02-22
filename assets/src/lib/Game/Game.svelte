@@ -34,7 +34,7 @@
       inEdit = inEdit.slice(0, -1);
     } else if(e.key === "Enter") {
       if(enterTimeout) return;
-      enterTimeout = setTimeout(() => enterTimeout = undefined, 1000);
+      enterTimeout = setTimeout(() => enterTimeout = undefined, 200);
       if(inEdit.length >= wordLength) {
         if($lobby.ping >= 500) {
           // below 500ms the loader just makes the app feel unresponsive unnecessarily
