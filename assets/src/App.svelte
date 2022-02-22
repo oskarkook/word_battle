@@ -43,6 +43,6 @@
       </Button>
     </div>
     <Game game={game}/>
-    <Keyboard guessedWords={$game.player_guesses[$game.player_id]} disabled={$game.player_id !== $game.view_player_id}/>
+    <Keyboard guessedWords={$game.player_guesses[$game.player_id]} disabled={$game.player_id !== $game.view_player_id || $game.state !== "running"}/>
   </div>
 </main>
