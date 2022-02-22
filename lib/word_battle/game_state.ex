@@ -129,7 +129,7 @@ defmodule WordBattle.GameState do
 
   @impl GenServer
   def handle_call({:add_player_guess, player_id, guess}, _, state) do
-    state = update_in(state, [:player_guesses, player_id], fn guesses -> guesses ++ [guess] end)
+    state = update_in(state, [:player_guesses, player_id], fn guesses -> [guess | guesses] end)
     {:reply, :ok, state}
   end
 

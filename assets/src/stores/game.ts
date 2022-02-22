@@ -37,7 +37,7 @@ function parsePlayerGuesses(guesses: {[id: PlayerId]: RemoteGuess[]}): GameState
   const result: GameState["player_guesses"] = {};
   Object.keys(guesses).forEach(playerId => {
     if(!result[playerId]) result[playerId] = [];
-    guesses[playerId].forEach(guess => {
+    guesses[playerId].reverse().forEach(guess => {
       result[playerId].push(parseGuess(guess));
     });
   });
