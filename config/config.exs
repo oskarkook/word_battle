@@ -36,11 +36,13 @@ config :tailwind,
 
 # Game config
 config :word_battle, :game,
-  max_players: 8,
-  # game lasts for 3 minutes
-  game_length: 3 * 60_000,
+  max_players: 10,
+  # queue waits 10 seconds before creating a game
+  queue_timeout: 10_000,
   # game starts after 5 seconds
   start_delay: 5_000,
+  # game lasts for 2 minutes
+  game_length: 2 * 60_000,
   # game state is purged after 5 minutes
   finish_delay: 5 * 60_000
 
