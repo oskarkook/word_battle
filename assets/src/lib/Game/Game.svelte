@@ -20,13 +20,15 @@
   $: guessedRows = $game.player_guesses[$game.player_id];
   $: rows = buildGrid(guessedRows, guessesAllowed, wordLength);
   $: activeRow = guessedRows.length;
-  $: inEdit = id ? "" : "";
+
+  let inEdit = "";
   let rowComponents: GridRow[] = [];
 
   let enterTimeout: NodeJS.Timeout | undefined = undefined;
   function handleKeydown(e: KeyboardEvent) {
     if(e.ctrlKey || e.metaKey || e.altKey) return;
     if(activeRow >= guessesAllowed) return;
+    if($game.state === "completed") return;
 
     if(e.key === "Backspace") {
       inEdit = inEdit.slice(0, -1);
@@ -60,19 +62,23 @@
     }
   }
 
-  $: state = $game.state; // https://github.com/sveltejs/svelte/issues/4535
+  // https://github.com/sveltejs/svelte/issues/4535
+  $: state = $game.state; 
+  $: solution = $game.solution;
   $: {
-    let message: string | undefined;
     if(state === "waiting") {
-      message = "Game found! Get ready!";
+      alerts.push({message: "Game found! Get ready!", time: 1500});
     } else if(state === "running") {
-      message = "Game has started!";
-    } else if(state === "completed") {
-      message = "Game has ended!";
+      alerts.push({message: "Game has started!", time: 1500});
+    } else if(state === "completed" && solution !== undefined) {
+      alerts.push({message: `Game has ended! The word was ${solution}`});
+      inEdit = "";
     }
-
-    if(message) {
-      alerts.push({message, time: 1500});
+  }
+  $: {
+    if(id || !id) {
+      alerts.clear();
+      inEdit = "";
     }
   }
 </script>
@@ -97,5 +103,4 @@
   class:hidden={!loading}
   class="absolute flex z-10 w-8 h-8 border-4 border-cyan-500 border-solid rounded-full animate-spin"
 />
-
 <Alert alerts={$alerts.concat($globalAlerts)}/>

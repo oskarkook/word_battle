@@ -6,7 +6,7 @@ export interface Alert {
 }
 
 export function createAlertsStore() {
-  const { subscribe, update } = writable<Alert[]>([]);
+  const { subscribe, update, set } = writable<Alert[]>([]);
 
   return {
     subscribe,
@@ -15,13 +15,19 @@ export function createAlertsStore() {
         setTimeout(() => {
           update(alerts => {
             const index = alerts.indexOf(alert);
-            if(index === -1) return;
+            if(index === -1) {
+              return alerts;
+            }
+
             alerts.splice(index, 1);
             return alerts;
           });
         }, alert.time);
       }
       update(alerts => [alert, ...alerts]);
+    },
+    clear: () => {
+      set([]);
     }
   };
 }
