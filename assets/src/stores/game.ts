@@ -93,7 +93,7 @@ export function createGameStore(socket: Socket) {
   const { subscribe, update, set } = writable<Game>(defaultGame);
 
   function scheduleStateUpdate(game: Game) {
-    if(game.state === "completed" && game.solution === undefined) {
+    if(game.state === "completed") {
       setTimeout(() => {
         channel.push("refetch_state", {})
           .receive("ok", (resp) => {
