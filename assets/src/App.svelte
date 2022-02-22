@@ -3,7 +3,6 @@
   import Keyboard from "$src/lib/Keyboard/Keyboard.svelte";
   import Button from "$src/lib/Button/Button.svelte";
   import NodeList from "$src/lib/NodeList/NodeList.svelte";
-  import Timer from "$src/lib/Timer/Timer.svelte";
   import { lobby } from "$src/stores/lobby";
   import { createGameStore } from "$src/stores/game";
   export let game: ReturnType<typeof createGameStore>;
@@ -49,15 +48,9 @@
         </label>
       </Button>
     </div>
-    <div class="flex w-full">
-      <div class="flex flex-1"></div>
-      <div class="flex flex-1 flex-col items-center justify-center select-none">
+    <div class="flex w-full items-center justify-center">
+      <div class="flex flex-col items-center justify-center select-none">
         <Game game={game}/>
-      </div>
-      <div class="flex flex-1 text-sm sm:text-2xl">
-        <div class="sm:pl-6 py-2">
-          <Timer endTime="2022-02-02T03:52:16.442555Z"/>
-        </div>
       </div>
     </div>
     <Keyboard guessedWords={$game.player_guesses[$game.player_id]}/>
