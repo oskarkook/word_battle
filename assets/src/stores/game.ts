@@ -1,8 +1,8 @@
 import { globalAlerts } from "$src/global";
 import { clearLocalGameInfo, GameInfo } from "$src/helpers/gameInfo";
-import { Classification, classifyLetter, LetterType } from "$src/helpers/letter";
+import { Classification, classifyLetter } from "$src/helpers/letter";
 import { Channel, Socket } from "phoenix";
-import { writable } from "svelte/store";
+import { writable, get } from "svelte/store";
 
 type PlayerId = string | number;
 export interface GameState {
@@ -18,6 +18,7 @@ export interface GameState {
   player_guesses: {
     [id: PlayerId]: Classification[][];
   },
+  solution: string | undefined;
 }
 
 type GuessMask = string;
@@ -67,13 +68,27 @@ const defaultState: GameState = {
   player_guesses: {
     "0": [],
   },
+  solution: undefined,
 };
 
 export function createGameStore(socket: Socket) {
   let channel: Channel | undefined;
   let stateUpdateTimer: NodeJS.Timer | undefined;
+  const store = writable<GameState>(defaultState);
+  const { subscribe, update, set } = store;
 
   function scheduleStateUpdate(state: GameState["state"], definition: GameState["game_definition"]) {
+    if(state === "completed" && get(store).solution === undefined) {
+      channel.push("refetch_state", {})
+        .receive("ok", (resp) => {
+          update(prevState => ({
+            ...prevState,
+            player_guesses: parsePlayerGuesses(resp.player_guesses),
+            solution: resp.solution,
+          }));
+        });
+    }
+
     if(state !== "waiting" && state !== "running") {
       stateUpdateTimer = undefined;
       return;
@@ -88,7 +103,6 @@ export function createGameStore(socket: Socket) {
     }, refDate.getTime() - Date.now());
   }
 
-  const { subscribe, update, set } = writable<GameState>(defaultState);
   return {
     subscribe,
     connect: ({node, game_id, token}: GameInfo) => {
@@ -120,8 +134,6 @@ export function createGameStore(socket: Socket) {
             const gameDefinition: GameState["game_definition"] = resp.game_definition;
             const gameState = getGameState(gameDefinition);
 
-            scheduleStateUpdate(gameState, gameDefinition);
-
             set({
               ...defaultState,
               id: game_id,
@@ -129,7 +141,9 @@ export function createGameStore(socket: Socket) {
               game_definition: gameDefinition,
               player_id: resp.player_id,
               player_guesses,
+              solution: resp.solution,
             });
+            scheduleStateUpdate(gameState, gameDefinition);
             resolve();
           })
           .receive("error", resp => {

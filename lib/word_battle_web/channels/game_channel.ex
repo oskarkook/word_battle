@@ -8,28 +8,27 @@ defmodule WordBattleWeb.GameChannel do
 
     with {:ok, {node, game_id, my_player_id}} <- GameState.verify(node, game_id, token),
          {:ok, game_info} <- GameState.get_info(node, game_id) do
-      %{game_definition: game_definition, player_guesses: player_guesses} = game_info
-
-      reply = %{
-        player_id: my_player_id,
-        game_definition:
-          Map.take(
-            game_definition,
-            [:begin_at, :finish_at, :word_length, :guesses_allowed]
-          ),
-        player_guesses:
-          player_guesses
-          |> mask_player_guesses(game_definition.solution)
-          |> hide_other_players(my_player_id)
-      }
+      game_definition = game_info.game_definition
+      disconnect_at(game_definition.dead_at)
 
       socket =
-        assign(socket,
+        assign(
+          socket,
           game_definition: game_definition,
           player_id: my_player_id
         )
 
-      disconnect_at(game_definition.dead_at)
+      reply =
+        game_info_reply(socket, game_info)
+        |> Map.merge(%{
+          player_id: my_player_id,
+          game_definition:
+            Map.take(
+              game_definition,
+              [:begin_at, :finish_at, :word_length, :guesses_allowed]
+            )
+        })
+
       {:ok, reply, socket}
     else
       {:error, :not_found} ->
@@ -80,8 +79,39 @@ defmodule WordBattleWeb.GameChannel do
   end
 
   @impl true
+  def handle_in("refetch_state", _, socket) do
+    game_definition = socket.assigns.game_definition
+
+    case GameState.get_info(game_definition.node, game_definition.id) do
+      {:ok, game_info} ->
+        {:reply, {:ok, game_info_reply(socket, game_info)}, socket}
+
+      _other ->
+        {:reply, {:error, %{reason: "Game not found!"}}}
+    end
+  end
+
+  @impl true
   def handle_info(:disconnect, socket) do
     {:stop, :normal, socket}
+  end
+
+  defp game_info_reply(socket, game_info) do
+    game_definition = game_info.game_definition
+    player_guesses = mask_player_guesses(game_info.player_guesses, game_definition.solution)
+
+    case GameState.game_state(game_definition) do
+      :completed ->
+        %{
+          player_guesses: player_guesses,
+          solution: game_definition.solution
+        }
+
+      _other ->
+        %{
+          player_guesses: hide_other_players(player_guesses, socket.assigns.player_id)
+        }
+    end
   end
 
   defp parse_node_and_id(string) when is_binary(string) do
@@ -105,7 +135,7 @@ defmodule WordBattleWeb.GameChannel do
 
     for {player_id, words} <- player_guesses, into: %{} do
       masks = Enum.map(words, &mask_guess(&1, letter_map))
-      guesses = Enum.zip_with(words, masks, & &1)
+      guesses = Enum.zip_with(words, masks, fn word, mask -> [word, mask] end)
       {player_id, guesses}
     end
   end
