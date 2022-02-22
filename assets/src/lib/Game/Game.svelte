@@ -9,6 +9,7 @@
   import { lobby } from "$src/stores/lobby";
   import { createGameStore } from "$src/stores/game";
   import GameProgress from "./GameProgress.svelte";
+  import PlayerGuesses from "./PlayerGuesses.svelte";
   export let game: ReturnType<typeof createGameStore>;
 
   const alerts = createAlertsStore();
@@ -90,23 +91,33 @@
 </script>
 
 <svelte:window on:keydown={handleKeydown}/>
-<GameProgress game={game}/>
-{#key id}
-  <GridContainer>
-    {#each rows as row, i}
-      <GridRow bind:this={rowComponents[i]}>
-        {#each row as {letter, type}, j}
-          <GridLetter {type} active={i === activeRow && inEdit.length > j}>
-            {i === activeRow ? (inEdit[j] || "") : letter}
-          </GridLetter>
+<div class="flex w-full">
+  <div class="flex flex-1"></div>
+  <div class="flex flex-1 flex-col items-center justify-center select-none">
+    <GameProgress game={game}/>
+    {#key id}
+      <GridContainer>
+        {#each rows as row, i}
+          <GridRow bind:this={rowComponents[i]}>
+            {#each row as {letter, type}, j}
+              <GridLetter {type} active={i === activeRow && inEdit.length > j}>
+                {i === activeRow ? (inEdit[j] || "") : letter}
+              </GridLetter>
+            {/each}
+          </GridRow>
         {/each}
-      </GridRow>
-    {/each}
-  </GridContainer>
-{/key}
-<div
-  style="border-top-color:transparent"
-  class:hidden={!loading}
-  class="absolute flex z-10 w-8 h-8 border-4 border-cyan-500 border-solid rounded-full animate-spin"
-/>
-<Alert alerts={$alerts.concat($globalAlerts)}/>
+      </GridContainer>
+    {/key}
+    <div
+      style="border-top-color:transparent"
+      class:hidden={!loading}
+      class="absolute flex z-10 w-8 h-8 border-4 border-cyan-500 border-solid rounded-full animate-spin"
+    />
+    <Alert alerts={$alerts.concat($globalAlerts)}/>
+  </div>
+  <div class="flex flex-1">
+    {#if id !== undefined}
+      <PlayerGuesses game={game}/>
+    {/if}
+  </div>
+</div>

@@ -42,11 +42,7 @@
         </label>
       </Button>
     </div>
-    <div class="flex w-full items-center justify-center">
-      <div class="flex flex-col items-center justify-center select-none">
-        <Game game={game}/>
-      </div>
-    </div>
+    <Game game={game}/>
     <Keyboard guessedWords={$game.player_guesses[$game.player_id]}/>
   </div>
 </main>
