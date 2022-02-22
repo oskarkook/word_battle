@@ -4,7 +4,7 @@
   import GridLetter from "$src/lib/Grid/GridLetter.svelte";
   import GridRow from "$src/lib/Grid/GridRow.svelte";
   import { allowedLetters, buildGrid } from "$src/helpers/letter";
-  import { createAlertsStore } from "$src/stores/alerts";
+  import { createAlertsStore, Alert as AlertT } from "$src/stores/alerts";
   import { globalAlerts } from "$src/global";
   import { lobby } from "$src/stores/lobby";
   import { createGameStore } from "$src/stores/game";
@@ -63,6 +63,11 @@
     }
   }
 
+  function onHideAlert({detail: {alert}}: CustomEvent<{alert: AlertT}>) {
+    alerts.hide(alert);
+    globalAlerts.hide(alert);
+  }
+
   // https://github.com/sveltejs/svelte/issues/4535
   $: state = $game.state; 
   $: solution = $game.solution;
@@ -94,6 +99,7 @@
 <div class="flex w-full">
   <div class="flex flex-1"></div>
   <div class="flex flex-1 flex-col items-center justify-center select-none">
+    <Alert alerts={$alerts.concat($globalAlerts)} on:hide={onHideAlert}/>
     <GameProgress game={game}/>
     {#key id}
       <GridContainer>
