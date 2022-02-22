@@ -92,14 +92,16 @@ export function createGameStore(socket: Socket) {
 
   function scheduleStateUpdate(game: Game) {
     if(game.state === "completed" && game.solution === undefined) {
-      channel.push("refetch_state", {})
-        .receive("ok", (resp) => {
-          update(prevState => ({
-            ...prevState,
-            player_guesses: parsePlayerGuesses(resp.player_guesses),
-            solution: resp.solution,
-          }));
-        });
+      setTimeout(() => {
+        channel.push("refetch_state", {})
+          .receive("ok", (resp) => {
+            update(prevState => ({
+              ...prevState,
+              player_guesses: parsePlayerGuesses(resp.player_guesses),
+              solution: resp.solution,
+            }));
+          });
+      }, 50 + Math.floor(Math.random() * 100));
     }
 
     if(game.state !== "waiting" && game.state !== "running" && game.state !== "player-done") {
