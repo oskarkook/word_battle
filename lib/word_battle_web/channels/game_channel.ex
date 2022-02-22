@@ -124,7 +124,7 @@ defmodule WordBattleWeb.GameChannel do
   end
 
   defp parse_node_and_id(string) when is_binary(string) do
-    [node, id] = String.split(string, ":", parts: 2)
+    [node, id] = String.split(string, "/", parts: 2)
     {String.to_existing_atom(node), id}
   end
 

@@ -129,7 +129,7 @@ export function createGameStore(socket: Socket) {
       if(channel !== undefined) {
         channel.leave();
       }
-      channel = socket.channel(`game:${node}:${game_id}`, {token});
+      channel = socket.channel(`game:${node}/${game_id}`, {token});
       update(state => ({...state, id: game_id, state: "connecting"}));
       return new Promise<void>((resolve, reject) => {
         channel.onClose((reason) => {
