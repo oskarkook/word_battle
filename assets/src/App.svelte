@@ -25,7 +25,7 @@
 
 <main class="{theme} h-screen w-full overflow-x-hidden bg-slate-50 py-2 md:py-4">
   <h1 class="text-3xl font-bold leading-7 text-gray-900 tracking-wider px-4 pb-1 text-center">
-    Placeholder
+    Word Battle
   </h1>
   <div class="flex flex-col justify-center items-center w-100 h-100 max-w-screen-sm mx-auto">
     <div class="m-0.5 sm:m-1">
