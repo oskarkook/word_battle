@@ -7,7 +7,9 @@
   }
 
   function prettify(name: string) {
-    return name.split("@")[0];
+    const results = name.match(/.+-(\w+)@.+/);
+    if(!results) return name;
+    return results[1];
   }
 </script>
 
