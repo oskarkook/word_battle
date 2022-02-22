@@ -59,10 +59,11 @@ defmodule WordBattleWeb.GameChannel do
           {:error, %{r: "s", m: "Game has not started yet!"}}
 
         !WordBattle.Words.is_valid_guess?(word) ->
+          # TODO: if nodes can have different wordsets, then this should be removed
           {:error, %{r: "w", m: "Not in word list!"}}
 
         true ->
-          :ok =
+          result =
             GameState.add_player_guess(
               game_definition.node,
               game_definition.id,
@@ -70,9 +71,15 @@ defmodule WordBattleWeb.GameChannel do
               word
             )
 
-          mask = mask_guess(word, game_definition.solution)
-          # TODO: broadcast
-          {:ok, %{r: mask}}
+          case result do
+            :ok ->
+              mask = mask_guess(word, game_definition.solution)
+              # TODO: broadcast
+              {:ok, %{r: mask}}
+
+            _other ->
+              {:error, %{reason: "Not allowed"}}
+          end
       end
 
     {:reply, reply, socket}

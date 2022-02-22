@@ -129,8 +129,18 @@ defmodule WordBattle.GameState do
 
   @impl GenServer
   def handle_call({:add_player_guess, player_id, guess}, _, state) do
-    state = update_in(state, [:player_guesses, player_id], fn guesses -> [guess | guesses] end)
-    {:reply, :ok, state}
+    guesses = Map.get(state.player_guesses, player_id)
+    definition = state.game_definition
+
+    with :running <- game_state(definition),
+         true <- WordBattle.Words.is_valid_guess?(guess),
+         true <- length(guesses) < definition.guesses_allowed do
+      state = update_in(state, [:player_guesses, player_id], fn guesses -> [guess | guesses] end)
+      {:reply, :ok, state}
+    else
+      _ ->
+        {:reply, :not_allowed, state}
+    end
   end
 
   @impl GenServer
