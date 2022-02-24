@@ -64,7 +64,7 @@ if config_env() == :prod do
       fly6pn: [
         strategy: Cluster.Strategy.DNSPoll,
         config: [
-          polling_interval: 5_000,
+          polling_interval: 60_000,
           query: "#{app_name}.internal",
           node_basename: app_name
         ]
