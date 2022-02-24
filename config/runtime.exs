@@ -22,6 +22,17 @@ if config_env() == :dev do
   config :word_battle, WordBattle.Words,
     solutions_path: System.get_env("SOLUTIONS", default_solutions_path),
     valid_guesses_path: System.get_env("VALID_GUESSES", default_guesses_path)
+
+  if Node.alive?() do
+    config :libcluster,
+      topologies: [
+        local: [
+          strategy: Cluster.Strategy.LocalEpmd
+        ]
+      ]
+  else
+    config :libcluster, topologies: []
+  end
 end
 
 if config_env() == :prod do
