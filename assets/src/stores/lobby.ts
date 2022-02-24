@@ -39,7 +39,7 @@ function measurePing(channel: Channel) {
 let defaultNode: Node = localStorage.getItem("default_node") ? JSON.parse(localStorage.getItem("default_node")) : {node: "", region: ""};
 let channel: Channel | undefined;
 const { subscribe, update } = writable<LobbyInfo>({
-  nodes: defaultNode ? [defaultNode] : [],
+  nodes: localStorage.getItem("nodes") ? JSON.parse(localStorage.getItem("nodes")) : [defaultNode],
   default_node: defaultNode,
   ping: 0,
   queuedForNode: undefined,
@@ -76,6 +76,7 @@ export const lobby = {
             defaultNode = resp.default_node;
             localStorage.setItem("default_node", JSON.stringify(defaultNode));
           }
+          localStorage.setItem("nodes", JSON.stringify(resp.nodes));
           update(info => ({...info, ...resp, default_node: defaultNode}));
           measurePing(channel).then(ping => update(state => ({...state, ping})));
           resolve();

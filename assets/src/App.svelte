@@ -34,7 +34,9 @@
       {:else}
         <Button class="animate-pulse" on:click={leaveQueue}>Searching...</Button>
       {/if}
-      <NodeList/>
+      {#if $lobby.nodes.length > 1}
+        <NodeList/>
+      {/if}
       <Button container>
         <label class="px-2 py-1 cursor-pointer">
           <span>Colorblind</span>
