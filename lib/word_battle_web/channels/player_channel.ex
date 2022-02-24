@@ -1,12 +1,12 @@
 defmodule WordBattleWeb.PlayerChannel do
   use WordBattleWeb, :channel
-  alias WordBattle.PlayerQueue
+  alias WordBattle.{NodeRegion, PlayerQueue}
 
   @impl true
   def join("player:lobby", _payload, socket) do
-    nodes = [node() | Node.list()]
+    nodes = NodeRegion.get([node() | Node.list()])
     socket = assign(socket, queued_on: nil)
-    {:ok, %{nodes: nodes, default_node: node()}, socket}
+    {:ok, %{nodes: nodes, default_node: hd(nodes)}, socket}
   end
 
   @impl true

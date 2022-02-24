@@ -7,7 +7,7 @@ Multiplayer word guessing game, built with:
 ## Development
 The back-end requires word lists for valid guesses and solutions. By default, these are loaded from
 `./words/valid_guesses.txt` and `./words/solutions.txt`. These files are not provided with the
-repository, so you should create your word lists there. Each word must be on its own line:
+repository, so you should create your own word lists there. Each word must be on a separate line:
 ```
 weary
 pilot
@@ -24,7 +24,19 @@ mix phx.server
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
-### Deployment
+## Multi-node configuration
+The application can run on multiple nodes, which can all be clustered together automatically,
+allowing the user to pick which node they want to play the game on. You can run the following
+commands in two different terminals:
+```
+REGION=R1 iex --sname r1 -S mix phx.server
+REGION=R2 iex --sname r2 -S mix
+```
+
+This will run the application in both terminals, which should automatically connect together. In the
+game UI, you will then be able to pick between the nodes.
+
+## Deployment
 For deployment, Mix releases and Docker are used. The [`Dockerfile`](./Dockerfile) handles this
 automatically:
 ```
@@ -39,6 +51,8 @@ any static storage requirements.
 - `SOLUTIONS` - Required. Path to the file with solution words
 - `VALID_GUESSES` - Required. Path to the file with valid guess words
 - `WORD_LENGTH` - Optional, defaults to `5`. Any words that are not this length will be discarded.
+- `REGION` - Optional, the region name for the node. This will be displayed in the node selection.
+Defaults to `$FLY_REGION` in deployment.
 
 ## Back-end architecture
 The lifecycle of a player is as follows:

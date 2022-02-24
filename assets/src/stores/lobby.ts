@@ -4,9 +4,10 @@ import { globalAlerts } from "$src/global";
 import { GameInfo, setLocalGameInfo } from "$src/helpers/gameInfo";
 import { createGameStore } from "$src/stores/game";
 
+type Node = {node: string, region: string};
 export interface LobbyInfo {
-  nodes: string[];
-  default_node: string;
+  nodes: Node[];
+  default_node: Node;
   ping: number;
   queuedForNode: string | undefined;
 };
@@ -35,11 +36,11 @@ function measurePing(channel: Channel) {
   });
 }
 
-let defaultNode = localStorage.getItem("default_node");
+let defaultNode: Node = localStorage.getItem("default_node") ? JSON.parse(localStorage.getItem("default_node")) : {node: "", region: ""};
 let channel: Channel | undefined;
 const { subscribe, update } = writable<LobbyInfo>({
   nodes: defaultNode ? [defaultNode] : [],
-  default_node: defaultNode || "",
+  default_node: defaultNode,
   ping: 0,
   queuedForNode: undefined,
 });
@@ -71,9 +72,9 @@ export const lobby = {
 
       channel.join()
         .receive("ok", resp => {
-          if(!defaultNode || !resp.nodes.includes(defaultNode)) {
+          if(!defaultNode || !resp.nodes.some(({ node }) => node === defaultNode.node)) {
             defaultNode = resp.default_node;
-            localStorage.setItem("default_node", defaultNode);
+            localStorage.setItem("default_node", JSON.stringify(defaultNode));
           }
           update(info => ({...info, ...resp, default_node: defaultNode}));
           measurePing(channel).then(ping => update(state => ({...state, ping})));
@@ -85,14 +86,14 @@ export const lobby = {
         });
     });
   },
-  setNode: (node: string) => {
-    localStorage.setItem("default_node", node);
+  setNode: (node: Node) => {
+    localStorage.setItem("default_node", JSON.stringify(node));
     update(info => ({...info, default_node: node}));
   },
-  joinQueue: (node: string) => {
-    channel.push("join_queue", { node })
+  joinQueue: (node: Node) => {
+    channel.push("join_queue", { node: node.node })
       .receive("ok", resp => {
-        update(state => ({...state, queuedForNode: node}));
+        update(state => ({...state, queuedForNode: node.node}));
       })
       .receive("error", resp => {
         globalAlerts.push({ message: resp, time: 1500 });
