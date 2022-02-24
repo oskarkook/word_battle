@@ -4,6 +4,7 @@
 
   function handleChange(e) {
     const node = $lobby.nodes.find(({ node }) => node === e.target.value);
+    lobby.leaveQueue();
     lobby.setNode(node);
   }
 </script>
