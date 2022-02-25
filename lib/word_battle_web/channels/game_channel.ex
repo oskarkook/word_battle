@@ -48,43 +48,43 @@ defmodule WordBattleWeb.GameChannel do
       |> String.slice(0..(game_definition.word_length - 1))
       |> String.upcase()
 
-    game_state = GameState.game_state(game_definition)
+    case GameState.validate_guess(game_definition, word) do
+      {false, :completed} ->
+        {:reply, {:error, %{r: "s", m: "Game has ended!"}}, socket}
 
-    reply =
-      cond do
-        game_state == :completed ->
-          {:error, %{r: "s", m: "Game has ended!"}}
+      {false, :waiting} ->
+        {:reply, {:error, %{r: "s", m: "Game has not started yet!"}}, socket}
 
-        game_state == :waiting ->
-          {:error, %{r: "s", m: "Game has not started yet!"}}
+      {false, :guesses_exceeded} ->
+        {:reply, {:error, %{r: "s", m: "You can't make any more guesses!"}}, socket}
 
-        !WordBattle.Words.is_valid_guess?(word) ->
-          # TODO: if nodes can have different wordsets, then this should be removed
-          {:error, %{r: "w", m: "Not in word list!"}}
+      {false, :invalid_guess} ->
+        {:reply, {:error, %{r: "w", m: "Not in word list!"}}, socket}
 
-        true ->
-          player_id = assigns.player_id
+      {false, _} ->
+        {:reply, {:error, %{r: "s", m: "Not allowed!"}}, socket}
 
-          result =
-            GameState.add_player_guess(
-              game_definition.node,
-              game_definition.id,
-              player_id,
-              word
-            )
+      {true, _} ->
+        player_id = assigns.player_id
 
-          case result do
-            :ok ->
-              mask = mask_guess(word, game_definition.solution)
-              Phoenix.Channel.broadcast_from(socket, "player_guess", %{id: player_id, mask: mask})
-              {:ok, %{r: mask}}
+        result =
+          GameState.add_player_guess(
+            game_definition.node,
+            game_definition.id,
+            player_id,
+            word
+          )
 
-            _other ->
-              {:error, %{reason: "Not allowed"}}
-          end
-      end
+        case result do
+          :ok ->
+            mask = mask_guess(word, game_definition.solution)
+            Phoenix.Channel.broadcast_from(socket, "player_guess", %{id: player_id, mask: mask})
+            {:reply, {:ok, %{r: mask}}, socket}
 
-    {:reply, reply, socket}
+          _other ->
+            {:reply, {:error, %{reason: "Not allowed!"}}, socket}
+        end
+    end
   end
 
   @impl true

@@ -69,6 +69,28 @@ defmodule WordBattle.GameState do
     end
   end
 
+  def validate_guess(game_definition, word, guess_count \\ nil) do
+    game_state = game_state(game_definition)
+
+    cond do
+      game_state == :completed ->
+        {false, :completed}
+
+      game_state == :waiting ->
+        {false, :waiting}
+
+      guess_count != nil && guess_count >= game_definition.guesses_allowed ->
+        {false, :guesses_exceeded}
+
+      !WordBattle.Words.is_valid_guess?(word) ->
+        # TODO: if nodes can have different wordsets, then this should be changed
+        {false, :invalid_guess}
+
+      true ->
+        {true, nil}
+    end
+  end
+
   # === Server ===
   @impl GenServer
   def init({game_id, player_pids}) do
@@ -129,16 +151,14 @@ defmodule WordBattle.GameState do
 
   @impl GenServer
   def handle_call({:add_player_guess, player_id, guess}, _, state) do
-    guesses = Map.get(state.player_guesses, player_id)
-    definition = state.game_definition
+    guess_count = Map.get(state.player_guesses, player_id) |> length()
 
-    with :running <- game_state(definition),
-         true <- WordBattle.Words.is_valid_guess?(guess),
-         true <- length(guesses) < definition.guesses_allowed do
-      state = update_in(state, [:player_guesses, player_id], fn guesses -> [guess | guesses] end)
-      {:reply, :ok, state}
-    else
-      _ ->
+    case validate_guess(state.game_definition, guess, guess_count) do
+      {true, _} ->
+        state = update_in(state, [:player_guesses, player_id], fn words -> [guess | words] end)
+        {:reply, :ok, state}
+
+      {false, _} ->
         {:reply, :not_allowed, state}
     end
   end
