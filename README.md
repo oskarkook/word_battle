@@ -51,7 +51,7 @@ any static storage requirements.
 - `SOLUTIONS` - Required. Path to the file with solution words
 - `VALID_GUESSES` - Required. Path to the file with valid guess words
 - `WORD_LENGTH` - Optional, defaults to `5`. Any words that are not this length will be discarded.
-- `REGION` - Optional, the region name for the node. This will be displayed in the node selection.
+- `REGION` - Optional. The region name for the node. This will be displayed in the node selection.
 Defaults to `$FLY_REGION` in deployment.
 
 ## Back-end architecture
