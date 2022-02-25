@@ -10,29 +10,32 @@
   $: wordLength = $game.game_definition.word_length;
 
   type Counts = Record<LetterType, number>;
-  function sortGuesses(guesses: Classification[][]): Classification[][] {
+  type PlayerGuess = {id: string, guess: Classification[], position: number};
+  function compareNumbers(numbers: [number, number][]): number {
+    if(numbers.length === 0) return 0;
+    const [a, b] = numbers[0];
+    const result = a - b;
+    if(result !== 0) {
+      return result;
+    } else {
+      return compareNumbers(numbers.slice(1));
+    }
+  }
+  function sortGuesses(guesses: PlayerGuess[]): PlayerGuess[] {
     return guesses
       .map(guess => {
         const counts: Counts = {correct: 0, present: 0, absent: 0};
-        guess.forEach(({letter, type}) => {
+        guess.guess.forEach(({letter, type}) => {
           counts[type]++;
         });
         return {guess, counts};
       })
       .sort((b, a) => {
-        if(a.counts.correct === b.counts.correct) {
-          if(a.counts.present === b.counts.present) {
-            return 0;
-          } else if(a.counts.present > b.counts.present) {
-            return 1;
-          } else {
-            return -1;
-          }
-        } else if(a.counts.correct > b.counts.correct) {
-          return 1;
-        } else {
-          return -1;
-        }
+        return compareNumbers([
+          [a.counts.correct, b.counts.correct],
+          [a.counts.present, b.counts.present],
+          [b.guess.position, a.guess.position]
+        ]);
       })
       .map(value => {
         return value.guess;
@@ -40,23 +43,18 @@
   }
 
   function rankPlayerGuesses(players: Game["player_guesses"]): Array<{id: PlayerId, guess: Classification[]}> {
-    const idMap = new Map<Classification[], string>();
-    const bestGuesses = Object.keys(players).map(id => {
-      const guesses = players[id];
+    const bestGuesses = Object.keys(players).map((id, i) => {
+      const guesses: PlayerGuess[] = players[id].map((guess, i) => ({id, guess, position: i}));
       let bestGuess = sortGuesses(guesses)[0];
       if(bestGuess === undefined) {
-        bestGuess = [];
+        bestGuess = {id, position: 0, guess: []};
         for(let i = 0; i < wordLength; i++) {
-          bestGuess.push({letter: undefined, type: "absent"});
+          bestGuess.guess.push({letter: undefined, type: "absent"});
         }
       }
-      idMap.set(bestGuess, id);
       return bestGuess;
     });
-
-    return sortGuesses(bestGuesses).map(guess => {
-      return {id: idMap.get(guess), guess};
-    });
+    return sortGuesses(bestGuesses);
   }
 
   function classes(id: PlayerId) {
