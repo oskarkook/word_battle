@@ -3,7 +3,7 @@ defmodule WordBattle.Words do
 
   @valid_letters_set "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                      |> String.graphemes()
-                     |> Enum.reduce(MapSet.new(), &MapSet.put(&2, &1))
+                     |> MapSet.new()
 
   def is_valid_guess?(word) do
     valid_guesses_set = :persistent_term.get(:valid_guesses_set)
@@ -25,14 +25,14 @@ defmodule WordBattle.Words do
       |> stream_words_file!()
       |> Enum.to_list()
 
-    valid_guesses_set = Enum.reduce(solutions_list, MapSet.new(), &MapSet.put(&2, &1))
     solutions_tuple = List.to_tuple(solutions_list)
     :persistent_term.put(:solutions_tuple, solutions_tuple)
 
     valid_guesses_set =
       config[:valid_guesses_path]
       |> stream_words_file!()
-      |> Enum.reduce(valid_guesses_set, &MapSet.put(&2, &1))
+      |> Enum.to_list()
+      |> then(fn valid_guesses -> MapSet.new(solutions_list ++ valid_guesses) end)
 
     :persistent_term.put(:valid_guesses_set, valid_guesses_set)
 
