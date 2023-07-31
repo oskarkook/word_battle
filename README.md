@@ -4,6 +4,8 @@ Multiplayer word guessing game, built with:
 - Svelte
 - Tailwind
 
+![Image of a running game](img.png)
+
 ## Development
 The back-end requires word lists for valid guesses and solutions. By default, these are loaded from
 `./words/valid_guesses.txt` and `./words/solutions.txt`. These files are not provided with the
