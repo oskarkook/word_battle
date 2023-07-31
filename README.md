@@ -24,6 +24,12 @@ mix phx.server
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
+You can also run it as a container:
+```
+podman build -t word-battle .
+podman run --rm -p 4000:4000 -e SECRET_KEY_BASE=secret -e FLY_APP_NAME=word-battle -e PHX_HOST=localhost word-battle:latest    
+```
+
 ## Multi-node configuration
 The application can run on multiple nodes, which can all be clustered together automatically,
 allowing the user to pick which node they want to play the game on. You can run the following
