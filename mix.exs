@@ -58,6 +58,7 @@ defmodule WordBattle.MixProject do
       setup: ["deps.get", "cmd --cd assets yarn install"],
       "assets.deploy": [
         "tailwind default --minify",
+        "cmd --cd assets yarn install",
         "cmd --cd assets node build.js --deploy",
         "phx.digest"
       ]
